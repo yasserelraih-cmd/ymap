@@ -583,6 +583,114 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'على {street}'**
   String navCurrentStreet(String street);
+
+  /// No description provided for @savedTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'المحفوظات'**
+  String get savedTitle;
+
+  /// No description provided for @setHome.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعيين كالبيت'**
+  String get setHome;
+
+  /// No description provided for @setWork.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعيين كالعمل'**
+  String get setWork;
+
+  /// No description provided for @homeSaved.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم حفظ مكان البيت'**
+  String get homeSaved;
+
+  /// No description provided for @workSaved.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم حفظ مكان العمل'**
+  String get workSaved;
+
+  /// No description provided for @save.
+  ///
+  /// In ar, this message translates to:
+  /// **'حفظ'**
+  String get save;
+
+  /// No description provided for @savedLabel.
+  ///
+  /// In ar, this message translates to:
+  /// **'محفوظ'**
+  String get savedLabel;
+
+  /// No description provided for @myCar.
+  ///
+  /// In ar, this message translates to:
+  /// **'سيارتي'**
+  String get myCar;
+
+  /// No description provided for @saveCar.
+  ///
+  /// In ar, this message translates to:
+  /// **'احفظ مكان سيارتي'**
+  String get saveCar;
+
+  /// No description provided for @carSaved.
+  ///
+  /// In ar, this message translates to:
+  /// **'حفظت مكان سيارتك'**
+  String get carSaved;
+
+  /// No description provided for @carSavedAt.
+  ///
+  /// In ar, this message translates to:
+  /// **'ركنت هنا {time}'**
+  String carSavedAt(String time);
+
+  /// No description provided for @noSaved.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد أماكن محفوظة بعد. اضغط «حفظ» في بطاقة أي مكان.'**
+  String get noSaved;
+
+  /// No description provided for @pickHome.
+  ///
+  /// In ar, this message translates to:
+  /// **'ابحث عن مكان البيت'**
+  String get pickHome;
+
+  /// No description provided for @pickWork.
+  ///
+  /// In ar, this message translates to:
+  /// **'ابحث عن مكان العمل'**
+  String get pickWork;
+
+  /// No description provided for @delete.
+  ///
+  /// In ar, this message translates to:
+  /// **'حذف'**
+  String get delete;
+
+  /// No description provided for @goToCar.
+  ///
+  /// In ar, this message translates to:
+  /// **'اذهب لسيارتي'**
+  String get goToCar;
+
+  /// No description provided for @favorites.
+  ///
+  /// In ar, this message translates to:
+  /// **'المفضلة'**
+  String get favorites;
+
+  /// No description provided for @more.
+  ///
+  /// In ar, this message translates to:
+  /// **'المزيد'**
+  String get more;
 }
 
 class _AppLocalizationsDelegate

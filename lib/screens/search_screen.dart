@@ -21,7 +21,11 @@ class SearchScreen extends StatefulWidget {
     required this.recent,
     required this.nearLat,
     required this.nearLon,
+    this.hint,
   });
+
+  /// نص إرشادي بديل (مثل: «ابحث عن مكان البيت»).
+  final String? hint;
 
   final SearchService service;
   final RecentSearches recent;
@@ -194,7 +198,7 @@ class _SearchScreenState extends State<SearchScreen> {
                         if (v.trim().isNotEmpty) _run(v);
                       },
                       decoration: InputDecoration(
-                        hintText: t.searchHint,
+                        hintText: widget.hint ?? t.searchHint,
                         prefixIcon: const Icon(Icons.search),
                         suffixIcon: ListenableBuilder(
                           listenable: _controller,

@@ -13,12 +13,14 @@ import '../navigation/voice_guide.dart';
 import '../routing/instructions.dart';
 import '../routing/route.dart';
 import '../routing/routing_service.dart';
+import '../saved/saved_places.dart';
 import '../search/place.dart';
 import '../search/recent_searches.dart';
 import '../search/search_service.dart';
 import '../state/settings_controller.dart';
 import '../widgets/place_card.dart';
 import '../widgets/route_card.dart';
+import '../widgets/saved_sheet.dart';
 import '../widgets/search_panel.dart';
 import '../widgets/settings_sheet.dart';
 import 'search_screen.dart';
@@ -202,6 +204,10 @@ class _HomeScreenState extends State<HomeScreen> {
       unawaited(_reroute(fix));
     }
     if (s.arrived) {
+      if (!(_source?.isSimulation ?? true)) {
+        // عند الوصول نحفظ مكان سيارتك تلقائياً (مثل «آخر موقع ركنت فيه»).
+        unawaited(_saved.saveCar(fix.lat, fix.lon));
+      }
       unawaited(_fixSub?.cancel());
       try {
         await WakelockPlus.disable();
@@ -300,22 +306,80 @@ class _HomeScreenState extends State<HomeScreen> {
     await _mapKey.currentState?.clearRoutes();
   }
 
-  Future<void> _openSearch() async {
+  final _saved = SavedPlaces()..load();
+
+  Future<Place?> _pickPlace({String? hint}) {
     final map = _mapKey.currentState;
     final near = map?.userLocation ?? map?.center;
-    final place = await Navigator.of(context).push<Place>(
+    return Navigator.of(context).push<Place>(
       MaterialPageRoute(
         builder: (_) => SearchScreen(
           service: _search,
           recent: _recent,
           nearLat: near?.latitude ?? YmapMap.riyadh.latitude,
           nearLon: near?.longitude ?? YmapMap.riyadh.longitude,
+          hint: hint,
         ),
       ),
     );
-    if (place == null || !mounted) return;
+  }
+
+  Future<void> _openSearch() async {
+    final place = await _pickPlace();
+    if (place != null && mounted) await _selectPlace(place);
+  }
+
+  Future<void> _selectPlace(Place place) async {
+    if (_routes != null) await _closeRoutes();
+    if (!mounted) return;
     setState(() => _place = place);
     await _mapKey.currentState?.showPlace(place.lat, place.lon);
+  }
+
+  /// البيت/العمل: إن كان محفوظاً نعرضه، وإلا نطلب اختياره من البحث.
+  Future<void> _openHomeOrWork({required bool home}) async {
+    final t = AppLocalizations.of(context);
+    final current = home ? _saved.home : _saved.work;
+    if (current != null) return _selectPlace(current);
+    final picked = await _pickPlace(hint: home ? t.pickHome : t.pickWork);
+    if (picked == null || !mounted) return;
+    if (home) {
+      await _saved.setHome(picked);
+    } else {
+      await _saved.setWork(picked);
+    }
+    _showMessage(home ? t.homeSaved : t.workSaved);
+    await _selectPlace(picked);
+  }
+
+  Future<void> _openSaved() async {
+    final place = await showSavedSheet(context, _saved);
+    if (place != null && mounted) await _selectPlace(place);
+  }
+
+  Future<void> _saveCarHere() async {
+    final t = AppLocalizations.of(context);
+    final here = await _mapKey.currentState?.locateUser();
+    if (!mounted) return;
+    if (here == null) {
+      _showMessage(t.needLocation);
+      return;
+    }
+    await _saved.saveCar(here.latitude, here.longitude);
+    _showMessage(t.carSaved);
+  }
+
+  Future<void> _openCar() async {
+    final car = _saved.car;
+    if (car == null) return;
+    final t = AppLocalizations.of(context);
+    await _selectPlace(Place(
+      name: t.myCar,
+      subtitle: t.carSavedAt(TimeOfDay.fromDateTime(car.savedAt).format(context)),
+      lat: car.lat,
+      lon: car.lon,
+      osmKey: 'car',
+    ));
   }
 
   Future<void> _closePlace() async {
@@ -353,12 +417,37 @@ class _HomeScreenState extends State<HomeScreen> {
         onClose: _closePlace,
         onMessage: _showMessage,
         onDirections: _startRouting,
+        isFavorite: _saved.isFavorite(place),
+        onToggleFavorite:
+            place.osmKey == 'car' ? null : () => _saved.toggleFavorite(place),
+        onSetHome: place.osmKey == 'car'
+            ? null
+            : () async {
+                final t = AppLocalizations.of(context);
+                await _saved.setHome(place);
+                _showMessage(t.homeSaved);
+              },
+        onSetWork: place.osmKey == 'car'
+            ? null
+            : () async {
+                final t = AppLocalizations.of(context);
+                await _saved.setWork(place);
+                _showMessage(t.workSaved);
+              },
         scrollController: scrollController,
       );
     }
     return SearchPanel(
       onOpenSettings: () => showSettingsSheet(context, widget.settings),
       onOpenSearch: _openSearch,
+      onHome: () => _openHomeOrWork(home: true),
+      onWork: () => _openHomeOrWork(home: false),
+      onSaved: _openSaved,
+      onNearby: _openSearch,
+      onSaveCar: _saveCarHere,
+      onCar: _saved.car == null ? null : _openCar,
+      homeSet: _saved.home != null,
+      workSet: _saved.work != null,
       scrollController: scrollController,
     );
   }
@@ -390,6 +479,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: _saved,
+      builder: (context, _) => _scaffold(context),
+    );
+  }
+
+  Widget _scaffold(BuildContext context) {
     return Scaffold(
       body: LayoutBuilder(
         builder: (context, constraints) {

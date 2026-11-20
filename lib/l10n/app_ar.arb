@@ -149,5 +149,30 @@
         "type": "String"
       }
     }
-  }
+  },
+  "savedTitle": "المحفوظات",
+  "setHome": "تعيين كالبيت",
+  "setWork": "تعيين كالعمل",
+  "homeSaved": "تم حفظ مكان البيت",
+  "workSaved": "تم حفظ مكان العمل",
+  "save": "حفظ",
+  "savedLabel": "محفوظ",
+  "myCar": "سيارتي",
+  "saveCar": "احفظ مكان سيارتي",
+  "carSaved": "حفظت مكان سيارتك",
+  "carSavedAt": "ركنت هنا {time}",
+  "@carSavedAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "noSaved": "لا توجد أماكن محفوظة بعد. اضغط «حفظ» في بطاقة أي مكان.",
+  "pickHome": "ابحث عن مكان البيت",
+  "pickWork": "ابحث عن مكان العمل",
+  "delete": "حذف",
+  "goToCar": "اذهب لسيارتي",
+  "favorites": "المفضلة",
+  "more": "المزيد"
 }

@@ -48,6 +48,7 @@ enum PlaceCategory {
     }
     return switch (osmKey) {
       'link' => Icons.link,
+      'car' => Icons.directions_car,
       'highway' => Icons.signpost_outlined,
       'place' => Icons.location_city,
       'shop' => Icons.storefront,

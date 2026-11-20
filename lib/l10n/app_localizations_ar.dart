@@ -273,4 +273,61 @@ class AppLocalizationsAr extends AppLocalizations {
   String navCurrentStreet(String street) {
     return 'على $street';
   }
+
+  @override
+  String get savedTitle => 'المحفوظات';
+
+  @override
+  String get setHome => 'تعيين كالبيت';
+
+  @override
+  String get setWork => 'تعيين كالعمل';
+
+  @override
+  String get homeSaved => 'تم حفظ مكان البيت';
+
+  @override
+  String get workSaved => 'تم حفظ مكان العمل';
+
+  @override
+  String get save => 'حفظ';
+
+  @override
+  String get savedLabel => 'محفوظ';
+
+  @override
+  String get myCar => 'سيارتي';
+
+  @override
+  String get saveCar => 'احفظ مكان سيارتي';
+
+  @override
+  String get carSaved => 'حفظت مكان سيارتك';
+
+  @override
+  String carSavedAt(String time) {
+    return 'ركنت هنا $time';
+  }
+
+  @override
+  String get noSaved =>
+      'لا توجد أماكن محفوظة بعد. اضغط «حفظ» في بطاقة أي مكان.';
+
+  @override
+  String get pickHome => 'ابحث عن مكان البيت';
+
+  @override
+  String get pickWork => 'ابحث عن مكان العمل';
+
+  @override
+  String get delete => 'حذف';
+
+  @override
+  String get goToCar => 'اذهب لسيارتي';
+
+  @override
+  String get favorites => 'المفضلة';
+
+  @override
+  String get more => 'المزيد';
 }

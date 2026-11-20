@@ -275,4 +275,60 @@ class AppLocalizationsEn extends AppLocalizations {
   String navCurrentStreet(String street) {
     return 'On $street';
   }
+
+  @override
+  String get savedTitle => 'Saved';
+
+  @override
+  String get setHome => 'Set as home';
+
+  @override
+  String get setWork => 'Set as work';
+
+  @override
+  String get homeSaved => 'Home saved';
+
+  @override
+  String get workSaved => 'Work saved';
+
+  @override
+  String get save => 'Save';
+
+  @override
+  String get savedLabel => 'Saved';
+
+  @override
+  String get myCar => 'My car';
+
+  @override
+  String get saveCar => 'Save my car\'s location';
+
+  @override
+  String get carSaved => 'Car location saved';
+
+  @override
+  String carSavedAt(String time) {
+    return 'Parked here $time';
+  }
+
+  @override
+  String get noSaved => 'No saved places yet. Tap «Save» on any place card.';
+
+  @override
+  String get pickHome => 'Search for your home';
+
+  @override
+  String get pickWork => 'Search for your work';
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get goToCar => 'Go to my car';
+
+  @override
+  String get favorites => 'Favorites';
+
+  @override
+  String get more => 'More';
 }

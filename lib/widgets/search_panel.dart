@@ -9,11 +9,29 @@ class SearchPanel extends StatelessWidget {
     super.key,
     required this.onOpenSettings,
     required this.onOpenSearch,
+    required this.onHome,
+    required this.onWork,
+    required this.onSaved,
+    required this.onNearby,
+    required this.onSaveCar,
+    this.onCar,
+    this.homeSet = false,
+    this.workSet = false,
     this.scrollController,
   });
 
   final VoidCallback onOpenSettings;
   final VoidCallback onOpenSearch;
+  final VoidCallback onHome;
+  final VoidCallback onWork;
+  final VoidCallback onSaved;
+  final VoidCallback onNearby;
+  final VoidCallback onSaveCar;
+
+  /// يظهر زر «سيارتي» فقط إذا كان مكان السيارة محفوظاً.
+  final VoidCallback? onCar;
+  final bool homeSet;
+  final bool workSet;
   final ScrollController? scrollController;
 
   @override
@@ -49,13 +67,32 @@ class SearchPanel extends StatelessWidget {
           spacing: 8,
           runSpacing: 8,
           children: [
-            _Shortcut(icon: Icons.home_outlined, label: t.home),
-            _Shortcut(icon: Icons.work_outline, label: t.work),
-            _Shortcut(icon: Icons.bookmark_border, label: t.saved),
-            _Shortcut(icon: Icons.near_me_outlined, label: t.nearby),
+            _Shortcut(
+              icon: homeSet ? Icons.home : Icons.home_outlined,
+              label: t.home,
+              onTap: onHome,
+            ),
+            _Shortcut(
+              icon: workSet ? Icons.work : Icons.work_outline,
+              label: t.work,
+              onTap: onWork,
+            ),
+            _Shortcut(icon: Icons.bookmark_border, label: t.saved, onTap: onSaved),
+            _Shortcut(icon: Icons.near_me_outlined, label: t.nearby, onTap: onNearby),
+            if (onCar != null)
+              _Shortcut(icon: Icons.directions_car, label: t.myCar, onTap: onCar!),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 8),
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: TextButton.icon(
+            onPressed: onSaveCar,
+            icon: const Icon(Icons.local_parking),
+            label: Text(t.saveCar),
+          ),
+        ),
+        const SizedBox(height: 8),
         Text(
           t.attribution,
           textAlign: TextAlign.center,
@@ -69,17 +106,18 @@ class SearchPanel extends StatelessWidget {
 }
 
 class _Shortcut extends StatelessWidget {
-  const _Shortcut({required this.icon, required this.label});
+  const _Shortcut({required this.icon, required this.label, required this.onTap});
 
   final IconData icon;
   final String label;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return ActionChip(
       avatar: Icon(icon, size: 18),
       label: Text(label),
-      onPressed: () {}, // تُفعّل مع المحفوظات في الخطوة 1.5
+      onPressed: onTap,
     );
   }
 }

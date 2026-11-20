@@ -16,6 +16,10 @@ class PlaceCard extends StatelessWidget {
     required this.onClose,
     required this.onMessage,
     required this.onDirections,
+    this.isFavorite = false,
+    this.onToggleFavorite,
+    this.onSetHome,
+    this.onSetWork,
     this.fromLat,
     this.fromLon,
     this.scrollController,
@@ -25,6 +29,10 @@ class PlaceCard extends StatelessWidget {
   final VoidCallback onClose;
   final void Function(String) onMessage;
   final VoidCallback onDirections;
+  final bool isFavorite;
+  final VoidCallback? onToggleFavorite;
+  final VoidCallback? onSetHome;
+  final VoidCallback? onSetWork;
   final double? fromLat;
   final double? fromLon;
   final ScrollController? scrollController;
@@ -66,6 +74,36 @@ class PlaceCard extends StatelessWidget {
                 ],
               ),
             ),
+            if (onToggleFavorite != null)
+              IconButton(
+                tooltip: isFavorite ? t.savedLabel : t.save,
+                onPressed: onToggleFavorite,
+                icon: Icon(isFavorite ? Icons.bookmark : Icons.bookmark_border,
+                    color: isFavorite ? Theme.of(context).colorScheme.primary : null),
+              ),
+            if (onSetHome != null || onSetWork != null)
+              PopupMenuButton<String>(
+                tooltip: t.more,
+                onSelected: (v) => v == 'home' ? onSetHome?.call() : onSetWork?.call(),
+                itemBuilder: (_) => [
+                  if (onSetHome != null)
+                    PopupMenuItem(
+                      value: 'home',
+                      child: ListTile(
+                        leading: const Icon(Icons.home_outlined),
+                        title: Text(t.setHome),
+                      ),
+                    ),
+                  if (onSetWork != null)
+                    PopupMenuItem(
+                      value: 'work',
+                      child: ListTile(
+                        leading: const Icon(Icons.work_outline),
+                        title: Text(t.setWork),
+                      ),
+                    ),
+                ],
+              ),
             IconButton(
               tooltip: t.close,
               onPressed: onClose,
