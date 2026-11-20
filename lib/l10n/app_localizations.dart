@@ -895,6 +895,138 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'حذف الكل'**
   String get deleteAll;
+
+  /// No description provided for @voiceSearch.
+  ///
+  /// In ar, this message translates to:
+  /// **'بحث بالصوت'**
+  String get voiceSearch;
+
+  /// No description provided for @voiceListening.
+  ///
+  /// In ar, this message translates to:
+  /// **'تكلّم الآن…'**
+  String get voiceListening;
+
+  /// No description provided for @voiceUnavailable.
+  ///
+  /// In ar, this message translates to:
+  /// **'الميكروفون غير متاح. اسمح به من إعدادات المتصفح أو استخدم Safari.'**
+  String get voiceUnavailable;
+
+  /// No description provided for @voiceExample.
+  ///
+  /// In ar, this message translates to:
+  /// **'جرّب: «ودّني أقرب بنزينة» أو «أقرب مسجد على طريقي»'**
+  String get voiceExample;
+
+  /// No description provided for @share.
+  ///
+  /// In ar, this message translates to:
+  /// **'مشاركة'**
+  String get share;
+
+  /// No description provided for @shareTrip.
+  ///
+  /// In ar, this message translates to:
+  /// **'مشاركة رحلتي'**
+  String get shareTrip;
+
+  /// No description provided for @shareTripText.
+  ///
+  /// In ar, this message translates to:
+  /// **'أنا في الطريق إلى {place}، أصل حوالي {eta}.\nموقعي الآن: {link}'**
+  String shareTripText(String place, String eta, String link);
+
+  /// No description provided for @openInGoogle.
+  ///
+  /// In ar, this message translates to:
+  /// **'في Google Maps'**
+  String get openInGoogle;
+
+  /// No description provided for @copied.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم النسخ'**
+  String get copied;
+
+  /// No description provided for @prayerTimes.
+  ///
+  /// In ar, this message translates to:
+  /// **'أوقات الصلاة'**
+  String get prayerTimes;
+
+  /// No description provided for @prayerFajr.
+  ///
+  /// In ar, this message translates to:
+  /// **'الفجر'**
+  String get prayerFajr;
+
+  /// No description provided for @prayerSunrise.
+  ///
+  /// In ar, this message translates to:
+  /// **'الشروق'**
+  String get prayerSunrise;
+
+  /// No description provided for @prayerDhuhr.
+  ///
+  /// In ar, this message translates to:
+  /// **'الظهر'**
+  String get prayerDhuhr;
+
+  /// No description provided for @prayerAsr.
+  ///
+  /// In ar, this message translates to:
+  /// **'العصر'**
+  String get prayerAsr;
+
+  /// No description provided for @prayerMaghrib.
+  ///
+  /// In ar, this message translates to:
+  /// **'المغرب'**
+  String get prayerMaghrib;
+
+  /// No description provided for @prayerIsha.
+  ///
+  /// In ar, this message translates to:
+  /// **'العشاء'**
+  String get prayerIsha;
+
+  /// No description provided for @prayerNext.
+  ///
+  /// In ar, this message translates to:
+  /// **'{name} بعد {left}'**
+  String prayerNext(String name, String left);
+
+  /// No description provided for @methodUmmAlQura.
+  ///
+  /// In ar, this message translates to:
+  /// **'حسب تقويم أم القرى — قد تختلف دقيقة أو دقيقتين عن مسجدك'**
+  String get methodUmmAlQura;
+
+  /// No description provided for @methodEgypt.
+  ///
+  /// In ar, this message translates to:
+  /// **'حسب الهيئة المصرية العامة للمساحة — قد تختلف دقيقة أو دقيقتين'**
+  String get methodEgypt;
+
+  /// No description provided for @nearestMosque.
+  ///
+  /// In ar, this message translates to:
+  /// **'أقرب مسجد'**
+  String get nearestMosque;
+
+  /// No description provided for @stopAdded.
+  ///
+  /// In ar, this message translates to:
+  /// **'أضفنا محطة: {name}'**
+  String stopAdded(String name);
+
+  /// No description provided for @stopAddedSpeech.
+  ///
+  /// In ar, this message translates to:
+  /// **'أضفت {name} على طريقك'**
+  String stopAddedSpeech(String name);
 }
 
 class _AppLocalizationsDelegate

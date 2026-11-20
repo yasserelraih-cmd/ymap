@@ -22,7 +22,11 @@ class SearchScreen extends StatefulWidget {
     required this.nearLat,
     required this.nearLon,
     this.hint,
+    this.initialQuery,
   });
+
+  /// نص يبدأ به البحث (مثلاً من الأمر الصوتي).
+  final String? initialQuery;
 
   /// نص إرشادي بديل (مثل: «ابحث عن مكان البيت»).
   final String? hint;
@@ -53,6 +57,11 @@ class _SearchScreenState extends State<SearchScreen> {
     widget.recent.load().then((r) {
       if (mounted) setState(() => _recent = r);
     });
+    final q = widget.initialQuery;
+    if (q != null && q.isNotEmpty) {
+      _controller.text = q;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _onChanged(q));
+    }
   }
 
   @override

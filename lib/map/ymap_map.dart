@@ -489,8 +489,10 @@ class YmapMapState extends State<YmapMap> {
 
     return MapLibreMap(
       styleString: style,
-      initialCameraPosition:
-          const CameraPosition(target: YmapMap.riyadh, zoom: 11),
+      // رابط مشاركة: نفتح على المكان مباشرة.
+      initialCameraPosition: _placeTarget != null
+          ? CameraPosition(target: _placeTarget!, zoom: 16)
+          : const CameraPosition(target: YmapMap.riyadh, zoom: 11),
       onMapCreated: (c) {
         _controller = c;
         c.onLineTapped.add(_onLineTapped);

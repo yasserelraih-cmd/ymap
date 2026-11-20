@@ -15,6 +15,9 @@ class SearchPanel extends StatelessWidget {
     required this.onNearby,
     required this.onSaveCar,
     this.onCar,
+    this.onVoice,
+    this.onPrayer,
+    this.prayerLabel,
     this.homeSet = false,
     this.workSet = false,
     this.scrollController,
@@ -30,6 +33,11 @@ class SearchPanel extends StatelessWidget {
 
   /// يظهر زر «سيارتي» فقط إذا كان مكان السيارة محفوظاً.
   final VoidCallback? onCar;
+  final VoidCallback? onVoice;
+  final VoidCallback? onPrayer;
+
+  /// مثل «العصر 2:44 م».
+  final String? prayerLabel;
   final bool homeSet;
   final bool workSet;
   final ScrollController? scrollController;
@@ -50,7 +58,11 @@ class SearchPanel extends StatelessWidget {
                 decoration: InputDecoration(
                   hintText: t.searchHint,
                   prefixIcon: const Icon(Icons.search),
-                  suffixIcon: const Icon(Icons.mic_none),
+                  suffixIcon: IconButton(
+                    tooltip: t.voiceSearch,
+                    icon: const Icon(Icons.mic_none),
+                    onPressed: onVoice,
+                  ),
                 ),
               ),
             ),
@@ -79,6 +91,11 @@ class SearchPanel extends StatelessWidget {
             ),
             _Shortcut(icon: Icons.bookmark_border, label: t.saved, onTap: onSaved),
             _Shortcut(icon: Icons.near_me_outlined, label: t.nearby, onTap: onNearby),
+            if (onPrayer != null)
+              _Shortcut(
+                  icon: Icons.mosque_outlined,
+                  label: prayerLabel ?? t.prayerTimes,
+                  onTap: onPrayer!),
             if (onCar != null)
               _Shortcut(icon: Icons.directions_car, label: t.myCar, onTap: onCar!),
           ],

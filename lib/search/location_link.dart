@@ -24,6 +24,13 @@ class LocationLink {
     final pin = RegExp(r'!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)').firstMatch(s);
     if (pin != null) return _place(pin.group(1)!, pin.group(2)!, _googleName(s));
 
+    // 1ب) رابط YMAP: ?p=lat,lon&n=الاسم
+    final ymap = RegExp(r'[?&]p=(-?\d{1,2}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)').firstMatch(s);
+    if (ymap != null) {
+      final n = RegExp(r'[?&]n=([^&#]+)').firstMatch(s)?.group(1)?.trim();
+      return _place(ymap.group(1)!, ymap.group(2)!, (n == null || n.isEmpty) ? null : n);
+    }
+
     // 2) معاملات الرابط: q= query= ll= destination= daddr= center=
     final param = RegExp(
       r'[?&](?:q|query|ll|sll|destination|daddr|center|loc)=(?:loc:)?(-?\d{1,2}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)',
@@ -78,6 +85,16 @@ class LocationLink {
   }
 
   /// رابط Google Maps لأي موقع (يفتح في Google Maps أو المتصفح، ويُشارك بسهولة).
+  /// رابط YMAP قابل للمشاركة يفتح المكان مباشرة في التطبيق.
+  static Uri ymap(double lat, double lon, {String? name}) => Uri.parse(ymapBase).replace(
+        queryParameters: {
+          'p': '${lat.toStringAsFixed(6)},${lon.toStringAsFixed(6)}',
+          if (name != null && name.isNotEmpty) 'n': name,
+        },
+      );
+
+  static const ymapBase = 'https://yasserelraih-cmd.github.io/ymap/';
+
   static Uri googleMaps(double lat, double lon) => Uri.parse(
       'https://www.google.com/maps/search/?api=1&query=${lat.toStringAsFixed(6)},${lon.toStringAsFixed(6)}');
 

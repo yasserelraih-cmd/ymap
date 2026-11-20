@@ -438,4 +438,82 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get deleteAll => 'حذف الكل';
+
+  @override
+  String get voiceSearch => 'بحث بالصوت';
+
+  @override
+  String get voiceListening => 'تكلّم الآن…';
+
+  @override
+  String get voiceUnavailable =>
+      'الميكروفون غير متاح. اسمح به من إعدادات المتصفح أو استخدم Safari.';
+
+  @override
+  String get voiceExample =>
+      'جرّب: «ودّني أقرب بنزينة» أو «أقرب مسجد على طريقي»';
+
+  @override
+  String get share => 'مشاركة';
+
+  @override
+  String get shareTrip => 'مشاركة رحلتي';
+
+  @override
+  String shareTripText(String place, String eta, String link) {
+    return 'أنا في الطريق إلى $place، أصل حوالي $eta.\nموقعي الآن: $link';
+  }
+
+  @override
+  String get openInGoogle => 'في Google Maps';
+
+  @override
+  String get copied => 'تم النسخ';
+
+  @override
+  String get prayerTimes => 'أوقات الصلاة';
+
+  @override
+  String get prayerFajr => 'الفجر';
+
+  @override
+  String get prayerSunrise => 'الشروق';
+
+  @override
+  String get prayerDhuhr => 'الظهر';
+
+  @override
+  String get prayerAsr => 'العصر';
+
+  @override
+  String get prayerMaghrib => 'المغرب';
+
+  @override
+  String get prayerIsha => 'العشاء';
+
+  @override
+  String prayerNext(String name, String left) {
+    return '$name بعد $left';
+  }
+
+  @override
+  String get methodUmmAlQura =>
+      'حسب تقويم أم القرى — قد تختلف دقيقة أو دقيقتين عن مسجدك';
+
+  @override
+  String get methodEgypt =>
+      'حسب الهيئة المصرية العامة للمساحة — قد تختلف دقيقة أو دقيقتين';
+
+  @override
+  String get nearestMosque => 'أقرب مسجد';
+
+  @override
+  String stopAdded(String name) {
+    return 'أضفنا محطة: $name';
+  }
+
+  @override
+  String stopAddedSpeech(String name) {
+    return 'أضفت $name على طريقك';
+  }
 }

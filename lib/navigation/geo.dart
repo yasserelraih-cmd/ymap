@@ -1,3 +1,4 @@
+import '../routing/route.dart';
 import 'dart:math' as math;
 
 const _earthRadius = 6371008.8; // متر
@@ -47,3 +48,19 @@ double bearingDegrees(double lat1, double lon1, double lat2, double lon2) {
 ({double lat, double lon}) interpolate(
         double aLat, double aLon, double bLat, double bLon, double t) =>
     (lat: aLat + (bLat - aLat) * t, lon: aLon + (bLon - aLon) * t);
+
+/// النقطة التي تبعد [meters] متراً من بداية الخط (أو آخر نقطة).
+GeoPoint pointAlong(List<GeoPoint> pts, double meters) {
+  if (pts.isEmpty) return const GeoPoint(0, 0);
+  var left = meters;
+  for (var i = 1; i < pts.length; i++) {
+    final d = distanceMeters(pts[i - 1].lat, pts[i - 1].lon, pts[i].lat, pts[i].lon);
+    if (d >= left && d > 0) {
+      final t = left / d;
+      return GeoPoint(pts[i - 1].lat + (pts[i].lat - pts[i - 1].lat) * t,
+          pts[i - 1].lon + (pts[i].lon - pts[i - 1].lon) * t);
+    }
+    left -= d;
+  }
+  return pts.last;
+}

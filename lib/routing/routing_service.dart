@@ -22,6 +22,7 @@ abstract class RoutingService {
     required double toLat,
     required double toLon,
     TravelMode mode = TravelMode.drive,
+    List<GeoPoint> via = const [],
   });
 }
 
@@ -40,14 +41,16 @@ class ValhallaRoutingService implements RoutingService {
     required double toLat,
     required double toLon,
     TravelMode mode = TravelMode.drive,
+    List<GeoPoint> via = const [],
   }) async {
     final request = {
       'locations': [
         {'lat': fromLat, 'lon': fromLon},
+        for (final v in via) {'lat': v.lat, 'lon': v.lon},
         {'lat': toLat, 'lon': toLon},
       ],
       'costing': mode.costing,
-      'alternates': 2,
+      'alternates': via.isEmpty ? 2 : 0,
       'units': 'kilometers',
       'directions_options': {'units': 'kilometers'},
     };

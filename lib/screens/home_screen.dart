@@ -1,6 +1,9 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../l10n/app_localizations.dart';
@@ -19,7 +22,13 @@ import '../alerts/road_alert.dart';
 import '../routing/speed_limits.dart';
 import '../contrib/contributions.dart';
 import '../saved/saved_places.dart';
+import '../navigation/geo.dart';
+import '../search/categories.dart';
+import '../search/location_link.dart';
 import '../search/place.dart';
+import '../voice/speech_input.dart';
+import '../voice/voice_command.dart';
+import '../widgets/prayer_sheet.dart';
 import '../search/recent_searches.dart';
 import '../search/search_service.dart';
 import '../state/settings_controller.dart';
@@ -87,6 +96,145 @@ class _HomeScreenState extends State<HomeScreen> {
     return EdgeInsets.fromLTRB(40, top + 72, 40, size.height * 0.5);
   }
 
+  /// محطة على الطريق (مثل بنزينة أضفتها بالصوت أثناء الملاحة).
+  List<GeoPoint> _via = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    // فتح رابط YMAP مُشارك: ?p=lat,lon&n=الاسم
+    if (kIsWeb) {
+      final shared = LocationLink.parse(Uri.base.toString());
+      if (shared != null && Uri.base.queryParameters.containsKey('p')) {
+        _place = shared;
+        WidgetsBinding.instance.addPostFrameCallback(
+            (_) => _mapKey.currentState?.showPlace(shared.lat, shared.lon));
+      }
+    }
+  }
+
+  // ===== المشاركة =====
+  Future<void> _sharePlace(Place place) async {
+    final t = AppLocalizations.of(context);
+    final link = LocationLink.ymap(place.lat, place.lon, name: place.name);
+    await _share('${place.name}\n$link\n${t.openInGoogle}: '
+        '${LocationLink.googleMaps(place.lat, place.lon)}');
+  }
+
+  Future<void> _shareTrip() async {
+    final t = AppLocalizations.of(context);
+    final s = _navState;
+    final place = _place;
+    if (s == null || place == null) return;
+    final eta = TimeOfDay.fromDateTime(
+            DateTime.now().add(Duration(seconds: s.remainingSec.round())))
+        .format(context);
+    final here = LocationLink.ymap(s.snappedLat, s.snappedLon, name: t.myLocation);
+    await _share(t.shareTripText(place.name, eta, '$here'));
+  }
+
+  Future<void> _share(String text) async {
+    try {
+      await SharePlus.instance.share(ShareParams(text: text));
+    } catch (_) {
+      // متصفح لا يدعم المشاركة: ننسخ النص.
+      await Clipboard.setData(ClipboardData(text: text));
+      if (mounted) _showMessage(AppLocalizations.of(context).copied);
+    }
+  }
+
+  // ===== أوقات الصلاة =====
+  String? _prayerLabel() {
+    final map = _mapKey.currentState;
+    final at = map?.userLocation ?? map?.center;
+    if (at == null) return null;
+    final t = AppLocalizations.of(context);
+    final (p, time) = nextPrayer(at.latitude, at.longitude, DateTime.now());
+    return '${prayerName(t, p)} ${TimeOfDay.fromDateTime(time).format(context)}';
+  }
+
+  Future<void> _openPrayer() async {
+    final map = _mapKey.currentState;
+    final at = map?.userLocation ?? map?.center ?? YmapMap.riyadh;
+    final wantMosque = await showPrayerSheet(context, at.latitude, at.longitude);
+    if (wantMosque == true && mounted) {
+      await _goNearest(PlaceCategory.mosque, at.latitude, at.longitude, navigate: false);
+    }
+  }
+
+  // ===== الأوامر الصوتية =====
+  Future<void> _voiceCommand() async {
+    final lang = Localizations.localeOf(context).languageCode;
+    final text = await listenOnce(context, lang: lang);
+    if (text == null || text.trim().isEmpty || !mounted) return;
+    final cmd = VoiceCommand.parse(text);
+    final map = _mapKey.currentState;
+    final here = map?.userLocation ?? map?.center ?? YmapMap.riyadh;
+
+    // أثناء الملاحة: «أقرب بنزينة على طريقي» → نضيفها محطة.
+    if (_navigating && cmd.category != null) {
+      await _addStopAlongRoute(cmd.category!);
+      return;
+    }
+    if (cmd.category != null && (cmd.nearest || cmd.navigate || cmd.query.split(' ').length == 1)) {
+      await _goNearest(cmd.category!, here.latitude, here.longitude, navigate: cmd.navigate);
+      return;
+    }
+    if (cmd.query.isEmpty) return;
+    final place = await _pickPlace(initialQuery: cmd.query);
+    if (place == null || !mounted) return;
+    await _selectPlace(place);
+    if (cmd.navigate) await _startRouting();
+  }
+
+  Future<void> _goNearest(PlaceCategory c, double lat, double lon,
+      {required bool navigate}) async {
+    final t = AppLocalizations.of(context);
+    try {
+      final list = await _search.nearby(c, nearLat: lat, nearLon: lon);
+      if (!mounted) return;
+      if (list.isEmpty) {
+        _showMessage(t.noResults);
+        return;
+      }
+      await _selectPlace(list.first);
+      if (navigate) await _startRouting();
+    } catch (_) {
+      if (mounted) _showMessage(t.searchError);
+    }
+  }
+
+  /// يبحث حول نقطة أمامك على المسار (~2 كم) ويختار الأقرب للمسار.
+  Future<void> _addStopAlongRoute(PlaceCategory c) async {
+    final t = AppLocalizations.of(context);
+    final route = _navRoute;
+    final s = _navState;
+    if (route == null || s == null) return;
+    final ahead = pointAlong(route.points, s.progressM + 2000);
+    try {
+      final list = await _search.nearby(c, nearLat: ahead.lat, nearLon: ahead.lon);
+      if (!mounted || list.isEmpty) {
+        if (mounted) _showMessage(t.noResults);
+        return;
+      }
+      double offRoute(Place p) {
+        var best = double.infinity;
+        for (var i = 0; i < route.points.length; i += 3) {
+          final d = distanceMeters(p.lat, p.lon, route.points[i].lat, route.points[i].lon);
+          if (d < best) best = d;
+        }
+        return best;
+      }
+      final stop = (list.toList()..sort((a, b) => offRoute(a).compareTo(offRoute(b)))).first;
+      _via = [GeoPoint(stop.lat, stop.lon)];
+      unawaited(_speaker.say(t.stopAddedSpeech(stop.name)));
+      _showMessage(t.stopAdded(stop.name));
+      await _reroute(NavFix(lat: s.snappedLat, lon: s.snappedLon));
+    } catch (_) {
+      if (mounted) _showMessage(t.searchError);
+    }
+  }
+
   Future<void> _startRouting() async {
     final place = _place;
     if (place == null) return;
@@ -110,6 +258,7 @@ class _HomeScreenState extends State<HomeScreen> {
         toLat: place.lat,
         toLon: place.lon,
         mode: _mode,
+        via: _via,
       );
       if (!mounted || _routes == null) return;
       setState(() {
@@ -307,6 +456,11 @@ class _HomeScreenState extends State<HomeScreen> {
     final route = _navRoute;
     if (engine == null || route == null || !mounted) return;
     final s = engine.update(fix);
+    final via = _via;
+    if (via.isNotEmpty &&
+        distanceMeters(fix.lat, fix.lon, via.first.lat, via.first.lon) < 60) {
+      _via = const []; // وصلت للمحطة
+    }
     _trackPts?.add(TrackPoint(fix.lat, fix.lon, DateTime.now(), speedMps: fix.speedMps));
     final speed = fix.speedMps ?? _navSpeed;
     setState(() {
@@ -394,6 +548,7 @@ class _HomeScreenState extends State<HomeScreen> {
         toLat: place.lat,
         toLon: place.lon,
         mode: _mode,
+        via: _via,
       );
       if (!mounted || !_navigating) return;
       final route = routes.first;
@@ -462,6 +617,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _engine = null;
     _voice = null;
     unawaited(_finishTrack());
+    _via = const [];
     _watcher = null;
     _limits = SpeedLimits.empty;
     _upcoming = null;
@@ -503,7 +659,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final _saved = SavedPlaces()..load();
 
-  Future<Place?> _pickPlace({String? hint}) {
+  Future<Place?> _pickPlace({String? hint, String? initialQuery}) {
     final map = _mapKey.currentState;
     final near = map?.userLocation ?? map?.center;
     return Navigator.of(context).push<Place>(
@@ -514,6 +670,7 @@ class _HomeScreenState extends State<HomeScreen> {
           nearLat: near?.latitude ?? YmapMap.riyadh.latitude,
           nearLon: near?.longitude ?? YmapMap.riyadh.longitude,
           hint: hint,
+          initialQuery: initialQuery,
         ),
       ),
     );
@@ -578,6 +735,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _closePlace() async {
+    _via = const [];
     setState(() {
       _place = null;
       _routes = null;
@@ -629,6 +787,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 _showMessage(t.homeSaved);
               },
         onReportIssue: () => _reportMapIssue(place.lat, place.lon),
+        onShare: () => _sharePlace(place),
         onSetWork: place.osmKey == 'car'
             ? null
             : () async {
@@ -648,6 +807,9 @@ class _HomeScreenState extends State<HomeScreen> {
       onNearby: _openSearch,
       onSaveCar: _saveCarHere,
       onCar: _saved.car == null ? null : _openCar,
+      onVoice: _voiceCommand,
+      onPrayer: _openPrayer,
+      prayerLabel: _prayerLabel(),
       homeSet: _saved.home != null,
       workSet: _saved.work != null,
       scrollController: scrollController,
@@ -713,6 +875,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     viewMode: _navView,
                     onCycleView: _cycleNavView,
                     onReport: _mode == TravelMode.drive ? _report : null,
+                    onShare: _shareTrip,
+                    onVoice: _voiceCommand,
                     speedLimitKmh: _limitNow,
                     upcomingAlert: _upcoming?.alert.type,
                     upcomingAlertM: _upcoming?.distanceM,

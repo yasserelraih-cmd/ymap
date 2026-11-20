@@ -7,7 +7,7 @@ import '../state/settings_controller.dart';
 
 
 /// رقم الإصدار المعروض في الإعدادات.
-const appVersion = '0.9.0';
+const appVersion = '0.10.0';
 
 /// نافذة الإعدادات: اللغة والمظهر (نهاري/ليلي/تلقائي).
 Future<void> showSettingsSheet(

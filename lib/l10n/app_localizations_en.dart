@@ -440,4 +440,81 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deleteAll => 'Delete all';
+
+  @override
+  String get voiceSearch => 'Voice search';
+
+  @override
+  String get voiceListening => 'Speak now…';
+
+  @override
+  String get voiceUnavailable =>
+      'Microphone unavailable. Allow it in browser settings or use Safari.';
+
+  @override
+  String get voiceExample => 'Try: “take me to the nearest gas station”';
+
+  @override
+  String get share => 'Share';
+
+  @override
+  String get shareTrip => 'Share my trip';
+
+  @override
+  String shareTripText(String place, String eta, String link) {
+    return 'I\'m on my way to $place, arriving around $eta.\nMy location now: $link';
+  }
+
+  @override
+  String get openInGoogle => 'In Google Maps';
+
+  @override
+  String get copied => 'Copied';
+
+  @override
+  String get prayerTimes => 'Prayer times';
+
+  @override
+  String get prayerFajr => 'Fajr';
+
+  @override
+  String get prayerSunrise => 'Sunrise';
+
+  @override
+  String get prayerDhuhr => 'Dhuhr';
+
+  @override
+  String get prayerAsr => 'Asr';
+
+  @override
+  String get prayerMaghrib => 'Maghrib';
+
+  @override
+  String get prayerIsha => 'Isha';
+
+  @override
+  String prayerNext(String name, String left) {
+    return '$name in $left';
+  }
+
+  @override
+  String get methodUmmAlQura =>
+      'Umm al-Qura method — may differ by a minute or two from your mosque';
+
+  @override
+  String get methodEgypt =>
+      'Egyptian General Authority of Survey method — may differ slightly';
+
+  @override
+  String get nearestMosque => 'Nearest mosque';
+
+  @override
+  String stopAdded(String name) {
+    return 'Stop added: $name';
+  }
+
+  @override
+  String stopAddedSpeech(String name) {
+    return 'Added $name on your way';
+  }
 }

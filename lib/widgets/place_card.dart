@@ -21,6 +21,7 @@ class PlaceCard extends StatelessWidget {
     this.onSetHome,
     this.onSetWork,
     this.onReportIssue,
+    this.onShare,
     this.fromLat,
     this.fromLon,
     this.scrollController,
@@ -35,6 +36,7 @@ class PlaceCard extends StatelessWidget {
   final VoidCallback? onSetHome;
   final VoidCallback? onSetWork;
   final VoidCallback? onReportIssue;
+  final VoidCallback? onShare;
   final double? fromLat;
   final double? fromLon;
   final ScrollController? scrollController;
@@ -76,6 +78,12 @@ class PlaceCard extends StatelessWidget {
                 ],
               ),
             ),
+            if (onShare != null)
+              IconButton(
+                tooltip: t.share,
+                onPressed: onShare,
+                icon: const Icon(Icons.share_outlined),
+              ),
             if (onToggleFavorite != null)
               IconButton(
                 tooltip: isFavorite ? t.savedLabel : t.save,

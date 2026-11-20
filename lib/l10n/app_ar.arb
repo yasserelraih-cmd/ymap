@@ -228,5 +228,64 @@
   },
   "exportData": "تصدير (GeoJSON)",
   "exported": "نسخت البيانات، الصقها في ملف أو بريد",
-  "deleteAll": "حذف الكل"
+  "deleteAll": "حذف الكل",
+  "voiceSearch": "بحث بالصوت",
+  "voiceListening": "تكلّم الآن…",
+  "voiceUnavailable": "الميكروفون غير متاح. اسمح به من إعدادات المتصفح أو استخدم Safari.",
+  "voiceExample": "جرّب: «ودّني أقرب بنزينة» أو «أقرب مسجد على طريقي»",
+  "share": "مشاركة",
+  "shareTrip": "مشاركة رحلتي",
+  "shareTripText": "أنا في الطريق إلى {place}، أصل حوالي {eta}.\nموقعي الآن: {link}",
+  "@shareTripText": {
+    "placeholders": {
+      "place": {
+        "type": "String"
+      },
+      "eta": {
+        "type": "String"
+      },
+      "link": {
+        "type": "String"
+      }
+    }
+  },
+  "openInGoogle": "في Google Maps",
+  "copied": "تم النسخ",
+  "prayerTimes": "أوقات الصلاة",
+  "prayerFajr": "الفجر",
+  "prayerSunrise": "الشروق",
+  "prayerDhuhr": "الظهر",
+  "prayerAsr": "العصر",
+  "prayerMaghrib": "المغرب",
+  "prayerIsha": "العشاء",
+  "prayerNext": "{name} بعد {left}",
+  "@prayerNext": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "left": {
+        "type": "String"
+      }
+    }
+  },
+  "methodUmmAlQura": "حسب تقويم أم القرى — قد تختلف دقيقة أو دقيقتين عن مسجدك",
+  "methodEgypt": "حسب الهيئة المصرية العامة للمساحة — قد تختلف دقيقة أو دقيقتين",
+  "nearestMosque": "أقرب مسجد",
+  "stopAdded": "أضفنا محطة: {name}",
+  "@stopAdded": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "stopAddedSpeech": "أضفت {name} على طريقك",
+  "@stopAddedSpeech": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
 }

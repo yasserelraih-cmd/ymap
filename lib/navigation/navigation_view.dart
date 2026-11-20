@@ -37,7 +37,15 @@ class NavigationView extends StatelessWidget {
     this.upcomingAlertM,
     this.onCycleView,
     this.onReport,
+    this.onShare,
+    this.onVoice,
   });
+
+  /// مشاركة الرحلة ووقت الوصول.
+  final VoidCallback? onShare;
+
+  /// أمر صوتي («أقرب بنزينة على طريقي»).
+  final VoidCallback? onVoice;
 
   final NavViewMode viewMode;
 
@@ -138,6 +146,14 @@ class NavigationView extends StatelessWidget {
                   },
                   onTap: onCycleView!,
                 ),
+              ],
+              if (onVoice != null) ...[
+                const SizedBox(height: 10),
+                _RoundButton(tooltip: t.voiceSearch, icon: Icons.mic, onTap: onVoice!),
+              ],
+              if (onShare != null) ...[
+                const SizedBox(height: 10),
+                _RoundButton(tooltip: t.shareTrip, icon: Icons.share, onTap: onShare!),
               ],
               if (onReport != null) ...[
                 const SizedBox(height: 10),
