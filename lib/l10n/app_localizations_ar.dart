@@ -387,4 +387,55 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get overSpeedSpeech => 'انتبه، تجاوزت السرعة المحددة';
+
+  @override
+  String get consentTitle => 'ساعدنا نحسّن الخريطة؟';
+
+  @override
+  String get consentBody =>
+      'نسجّل مسار رحلتك لتصحيح الطرق والحارات. نحذف أول وآخر 200 متر لحماية مكان بيتك وعملك، والمسار يبقى على جهازك ويمكنك حذفه أو إيقاف التسجيل من الإعدادات.';
+
+  @override
+  String get consentYes => 'موافق';
+
+  @override
+  String get consentNo => 'لا، شكراً';
+
+  @override
+  String get mapIssueTitle => 'الخريطة هنا غير دقيقة';
+
+  @override
+  String get mapIssueHint => 'مثال: الطريق مقفل، الدوار تغيّر، اسم المحل خطأ…';
+
+  @override
+  String get mapIssueThanks => 'شكراً، حفظنا ملاحظتك';
+
+  @override
+  String get cancel => 'إلغاء';
+
+  @override
+  String get send => 'إرسال';
+
+  @override
+  String get contribTitle => 'مساهماتي في الخريطة';
+
+  @override
+  String get recordTracks => 'تسجيل مساراتي';
+
+  @override
+  String get recordTracksHint => 'بدون أول وآخر 200 متر، وتبقى على جهازك';
+
+  @override
+  String contribCounts(String tracks, String issues) {
+    return '$tracks مسار مسجّل · $issues ملاحظة';
+  }
+
+  @override
+  String get exportData => 'تصدير (GeoJSON)';
+
+  @override
+  String get exported => 'نسخت البيانات، الصقها في ملف أو بريد';
+
+  @override
+  String get deleteAll => 'حذف الكل';
 }

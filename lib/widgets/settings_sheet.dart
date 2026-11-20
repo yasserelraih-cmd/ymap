@@ -1,11 +1,13 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../contrib/contributions.dart';
 import '../l10n/app_localizations.dart';
+import 'contrib_dialogs.dart';
 import '../state/settings_controller.dart';
 
 
 /// رقم الإصدار المعروض في الإعدادات.
-const appVersion = '0.8.0';
+const appVersion = '0.9.0';
 
 /// نافذة الإعدادات: اللغة والمظهر (نهاري/ليلي/تلقائي).
 Future<void> showSettingsSheet(
@@ -73,6 +75,8 @@ Future<void> showSettingsSheet(
                   value: settings.cameraAlerts,
                   onChanged: settings.setCameraAlerts,
                 ),
+                const Divider(height: 24),
+                ContributionsTile(contributions: Contributions()),
                 const SizedBox(height: 12),
                 Text(
                   t.version(appVersion),

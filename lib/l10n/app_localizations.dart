@@ -799,6 +799,102 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'انتبه، تجاوزت السرعة المحددة'**
   String get overSpeedSpeech;
+
+  /// No description provided for @consentTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'ساعدنا نحسّن الخريطة؟'**
+  String get consentTitle;
+
+  /// No description provided for @consentBody.
+  ///
+  /// In ar, this message translates to:
+  /// **'نسجّل مسار رحلتك لتصحيح الطرق والحارات. نحذف أول وآخر 200 متر لحماية مكان بيتك وعملك، والمسار يبقى على جهازك ويمكنك حذفه أو إيقاف التسجيل من الإعدادات.'**
+  String get consentBody;
+
+  /// No description provided for @consentYes.
+  ///
+  /// In ar, this message translates to:
+  /// **'موافق'**
+  String get consentYes;
+
+  /// No description provided for @consentNo.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا، شكراً'**
+  String get consentNo;
+
+  /// No description provided for @mapIssueTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'الخريطة هنا غير دقيقة'**
+  String get mapIssueTitle;
+
+  /// No description provided for @mapIssueHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'مثال: الطريق مقفل، الدوار تغيّر، اسم المحل خطأ…'**
+  String get mapIssueHint;
+
+  /// No description provided for @mapIssueThanks.
+  ///
+  /// In ar, this message translates to:
+  /// **'شكراً، حفظنا ملاحظتك'**
+  String get mapIssueThanks;
+
+  /// No description provided for @cancel.
+  ///
+  /// In ar, this message translates to:
+  /// **'إلغاء'**
+  String get cancel;
+
+  /// No description provided for @send.
+  ///
+  /// In ar, this message translates to:
+  /// **'إرسال'**
+  String get send;
+
+  /// No description provided for @contribTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'مساهماتي في الخريطة'**
+  String get contribTitle;
+
+  /// No description provided for @recordTracks.
+  ///
+  /// In ar, this message translates to:
+  /// **'تسجيل مساراتي'**
+  String get recordTracks;
+
+  /// No description provided for @recordTracksHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'بدون أول وآخر 200 متر، وتبقى على جهازك'**
+  String get recordTracksHint;
+
+  /// No description provided for @contribCounts.
+  ///
+  /// In ar, this message translates to:
+  /// **'{tracks} مسار مسجّل · {issues} ملاحظة'**
+  String contribCounts(String tracks, String issues);
+
+  /// No description provided for @exportData.
+  ///
+  /// In ar, this message translates to:
+  /// **'تصدير (GeoJSON)'**
+  String get exportData;
+
+  /// No description provided for @exported.
+  ///
+  /// In ar, this message translates to:
+  /// **'نسخت البيانات، الصقها في ملف أو بريد'**
+  String get exported;
+
+  /// No description provided for @deleteAll.
+  ///
+  /// In ar, this message translates to:
+  /// **'حذف الكل'**
+  String get deleteAll;
 }
 
 class _AppLocalizationsDelegate

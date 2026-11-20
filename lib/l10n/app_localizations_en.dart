@@ -387,4 +387,57 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get overSpeedSpeech => 'Careful, you are over the speed limit';
+
+  @override
+  String get consentTitle => 'Help us improve the map?';
+
+  @override
+  String get consentBody =>
+      'We record your trip path to fix roads and lanes. The first and last 200 m are removed to protect your home and work, the path stays on your device, and you can delete it or stop recording in Settings.';
+
+  @override
+  String get consentYes => 'Allow';
+
+  @override
+  String get consentNo => 'No thanks';
+
+  @override
+  String get mapIssueTitle => 'Map is wrong here';
+
+  @override
+  String get mapIssueHint =>
+      'e.g. road closed, roundabout changed, wrong shop name…';
+
+  @override
+  String get mapIssueThanks => 'Thanks, your note is saved';
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
+  String get send => 'Send';
+
+  @override
+  String get contribTitle => 'My map contributions';
+
+  @override
+  String get recordTracks => 'Record my trips';
+
+  @override
+  String get recordTracksHint =>
+      'Without the first and last 200 m, kept on your device';
+
+  @override
+  String contribCounts(String tracks, String issues) {
+    return '$tracks trips recorded · $issues notes';
+  }
+
+  @override
+  String get exportData => 'Export (GeoJSON)';
+
+  @override
+  String get exported => 'Copied — paste it into a file or email';
+
+  @override
+  String get deleteAll => 'Delete all';
 }

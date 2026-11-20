@@ -20,6 +20,7 @@ class PlaceCard extends StatelessWidget {
     this.onToggleFavorite,
     this.onSetHome,
     this.onSetWork,
+    this.onReportIssue,
     this.fromLat,
     this.fromLon,
     this.scrollController,
@@ -33,6 +34,7 @@ class PlaceCard extends StatelessWidget {
   final VoidCallback? onToggleFavorite;
   final VoidCallback? onSetHome;
   final VoidCallback? onSetWork;
+  final VoidCallback? onReportIssue;
   final double? fromLat;
   final double? fromLon;
   final ScrollController? scrollController;
@@ -81,10 +83,14 @@ class PlaceCard extends StatelessWidget {
                 icon: Icon(isFavorite ? Icons.bookmark : Icons.bookmark_border,
                     color: isFavorite ? Theme.of(context).colorScheme.primary : null),
               ),
-            if (onSetHome != null || onSetWork != null)
+            if (onSetHome != null || onSetWork != null || onReportIssue != null)
               PopupMenuButton<String>(
                 tooltip: t.more,
-                onSelected: (v) => v == 'home' ? onSetHome?.call() : onSetWork?.call(),
+                onSelected: (v) => switch (v) {
+                  'home' => onSetHome?.call(),
+                  'work' => onSetWork?.call(),
+                  _ => onReportIssue?.call(),
+                },
                 itemBuilder: (_) => [
                   if (onSetHome != null)
                     PopupMenuItem(
@@ -100,6 +106,14 @@ class PlaceCard extends StatelessWidget {
                       child: ListTile(
                         leading: const Icon(Icons.work_outline),
                         title: Text(t.setWork),
+                      ),
+                    ),
+                  if (onReportIssue != null)
+                    PopupMenuItem(
+                      value: 'issue',
+                      child: ListTile(
+                        leading: const Icon(Icons.report_outlined),
+                        title: Text(t.mapIssueTitle),
                       ),
                     ),
                 ],

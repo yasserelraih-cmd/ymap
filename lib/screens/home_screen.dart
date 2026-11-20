@@ -17,6 +17,7 @@ import '../alerts/alert_watcher.dart';
 import '../alerts/osm_cameras.dart';
 import '../alerts/road_alert.dart';
 import '../routing/speed_limits.dart';
+import '../contrib/contributions.dart';
 import '../saved/saved_places.dart';
 import '../search/place.dart';
 import '../search/recent_searches.dart';
@@ -24,6 +25,7 @@ import '../search/search_service.dart';
 import '../state/settings_controller.dart';
 import '../widgets/place_card.dart';
 import '../widgets/route_card.dart';
+import '../widgets/contrib_dialogs.dart';
 import '../widgets/saved_sheet.dart';
 import '../widgets/search_panel.dart';
 import '../widgets/settings_sheet.dart';
@@ -152,6 +154,25 @@ class _HomeScreenState extends State<HomeScreen> {
   UpcomingAlert? _upcoming;
   int? _limitNow;
   int? _overSpeedWarnedFor;
+
+  // ===== تسجيل المسار (بموافقتك) =====
+  final _contrib = Contributions();
+  List<TrackPoint>? _trackPts;
+
+  Future<void> _finishTrack() async {
+    final pts = _trackPts;
+    _trackPts = null;
+    if (pts != null && pts.length > 2) await _contrib.saveTrack(pts);
+  }
+
+  Future<void> _reportMapIssue(double lat, double lon) async {
+    final t = AppLocalizations.of(context);
+    final note = await askMapIssue(context);
+    if (note == null || !mounted) return;
+    await _contrib.addIssue(
+        MapIssue(lat: lat, lon: lon, note: note, createdAt: DateTime.now()));
+    _showMessage(t.mapIssueThanks);
+  }
   TravelMode _mode = TravelMode.drive;
 
   bool get _navigating => _navRoute != null;
@@ -162,6 +183,15 @@ class _HomeScreenState extends State<HomeScreen> {
     final t = AppLocalizations.of(context);
     final lang = Localizations.localeOf(context).languageCode;
     final route = routes[_selectedRoute];
+    if (!simulate) {
+      var consent = await _contrib.consent();
+      if (consent == null && mounted) {
+        consent = await askTrackConsent(context);
+        await _contrib.setConsent(consent);
+      }
+      _trackPts = consent == true ? <TrackPoint>[] : null;
+      if (!mounted) return;
+    }
     // أول جملة تُقال داخل ضغطة الزر: المتصفح (خصوصاً Safari) يسمح بالصوت بعدها.
     await _speaker.setLanguage(lang);
     unawaited(_speaker.say(
@@ -277,6 +307,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final route = _navRoute;
     if (engine == null || route == null || !mounted) return;
     final s = engine.update(fix);
+    _trackPts?.add(TrackPoint(fix.lat, fix.lon, DateTime.now(), speedMps: fix.speedMps));
     final speed = fix.speedMps ?? _navSpeed;
     setState(() {
       _navState = s;
@@ -308,6 +339,7 @@ class _HomeScreenState extends State<HomeScreen> {
         unawaited(_saved.saveCar(fix.lat, fix.lon));
       }
       unawaited(_fixSub?.cancel());
+      unawaited(_finishTrack());
       try {
         await WakelockPlus.disable();
       } catch (_) {}
@@ -429,6 +461,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _source = null;
     _engine = null;
     _voice = null;
+    unawaited(_finishTrack());
     _watcher = null;
     _limits = SpeedLimits.empty;
     _upcoming = null;
@@ -595,6 +628,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 await _saved.setHome(place);
                 _showMessage(t.homeSaved);
               },
+        onReportIssue: () => _reportMapIssue(place.lat, place.lon),
         onSetWork: place.osmKey == 'car'
             ? null
             : () async {
