@@ -93,4 +93,90 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get view2d => 'منظور مسطّح';
+
+  @override
+  String get nearbyTitle => 'حولك';
+
+  @override
+  String get recentTitle => 'آخر عمليات البحث';
+
+  @override
+  String get clearRecent => 'مسح';
+
+  @override
+  String get noResults => 'لا توجد نتائج. جرّب كتابة الاسم بطريقة أخرى.';
+
+  @override
+  String get searchError => 'تعذّر البحث. تأكد من الاتصال بالإنترنت.';
+
+  @override
+  String get catRestaurant => 'مطاعم';
+
+  @override
+  String get catFuel => 'محطات وقود';
+
+  @override
+  String get catMosque => 'مساجد';
+
+  @override
+  String get catPharmacy => 'صيدليات';
+
+  @override
+  String get catHospital => 'مستشفيات';
+
+  @override
+  String get catBank => 'بنوك';
+
+  @override
+  String get directions => 'المسار';
+
+  @override
+  String get copyLocation => 'نسخ الموقع';
+
+  @override
+  String get locationCopied => 'تم نسخ رابط الموقع';
+
+  @override
+  String get directionsSoon => 'الملاحة تأتي في الخطوة التالية (1.3)';
+
+  @override
+  String get close => 'إغلاق';
+
+  @override
+  String get back => 'رجوع';
+
+  @override
+  String distanceKm(String km) {
+    return '$km كم';
+  }
+
+  @override
+  String distanceM(String m) {
+    return '$m م';
+  }
+
+  @override
+  String get pastedLocation => 'موقع من الرابط';
+
+  @override
+  String get shortLinkWeb =>
+      'الروابط المختصرة تعمل في تطبيق الجوال. في المتصفح افتح الرابط في Google Maps ثم انسخ الرابط الكامل أو الإحداثيات والصقها هنا.';
+
+  @override
+  String get openingLink => 'جارٍ فتح الرابط…';
+
+  @override
+  String get linkNotFound => 'لم أجد موقعاً في هذا الرابط.';
+
+  @override
+  String get paste => 'لصق';
+
+  @override
+  String get openGoogleMaps => 'Google Maps';
+
+  @override
+  String get openWaze => 'Waze';
+
+  @override
+  String get cantOpen => 'تعذّر فتح التطبيق.';
 }

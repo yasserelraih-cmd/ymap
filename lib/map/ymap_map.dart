@@ -39,8 +39,60 @@ class YmapMapState extends State<YmapMap> {
   bool _locationOn = false;
   bool _is3D = false;
   MyLocationTrackingMode _tracking = MyLocationTrackingMode.none;
+  LatLng? _user; // آخر موقع معروف لك
+  LatLng? _placeTarget; // المكان المختار من البحث
+  Circle? _placeMarker;
 
   bool get is3D => _is3D;
+
+  /// آخر موقع معروف لك (null إن لم تسمح بالموقع).
+  LatLng? get userLocation => _user;
+
+  /// مركز الخريطة الحالي.
+  LatLng get center => _controller?.cameraPosition?.target ?? YmapMap.riyadh;
+
+  /// يعرض مكاناً من البحث: علامة على الخريطة + انتقال إليه.
+  Future<void> showPlace(double lat, double lon) async {
+    _placeTarget = LatLng(lat, lon);
+    _tracking = MyLocationTrackingMode.none;
+    await _controller?.updateMyLocationTrackingMode(MyLocationTrackingMode.none);
+    await _drawPlaceMarker();
+    await _controller?.animateCamera(
+      CameraUpdate.newCameraPosition(CameraPosition(
+        target: _placeTarget!,
+        zoom: 16,
+        tilt: _is3D ? 60 : 0,
+      )),
+    );
+  }
+
+  Future<void> clearPlace() async {
+    _placeTarget = null;
+    final m = _placeMarker;
+    _placeMarker = null;
+    if (m != null) await _controller?.removeCircle(m);
+  }
+
+  Future<void> _drawPlaceMarker() async {
+    final c = _controller;
+    final target = _placeTarget;
+    if (c == null) return;
+    final old = _placeMarker;
+    _placeMarker = null;
+    if (old != null) {
+      try {
+        await c.removeCircle(old);
+      } catch (_) {}
+    }
+    if (target == null) return;
+    _placeMarker = await c.addCircle(CircleOptions(
+      geometry: target,
+      circleRadius: 9,
+      circleColor: '#0B7A75',
+      circleStrokeColor: '#FFFFFF',
+      circleStrokeWidth: 3,
+    ));
+  }
 
   @override
   void initState() {
@@ -81,6 +133,8 @@ class YmapMapState extends State<YmapMap> {
     setState(() => _locationOn = true);
     final pos = await _location.current();
     if (pos == null || !mounted) return;
+    _user = LatLng(pos.latitude, pos.longitude);
+    if (_placeTarget != null) return; // لا ننقل الخريطة إن كنت تشاهد مكاناً
     await _controller?.animateCamera(
       CameraUpdate.newLatLngZoom(LatLng(pos.latitude, pos.longitude), 15),
     );
@@ -110,6 +164,7 @@ class YmapMapState extends State<YmapMap> {
       _tracking = next;
     });
     final pos = await _location.current();
+    if (pos != null) _user = LatLng(pos.latitude, pos.longitude);
     if (pos != null && mounted) {
       await _controller?.animateCamera(
         CameraUpdate.newCameraPosition(CameraPosition(
@@ -170,6 +225,9 @@ class YmapMapState extends State<YmapMap> {
       initialCameraPosition:
           const CameraPosition(target: YmapMap.riyadh, zoom: 11),
       onMapCreated: (c) => _controller = c,
+      // تغيير التصميم (ليلي/لغة) يمسح العلامات، فنعيد رسمها.
+      onStyleLoadedCallback: _drawPlaceMarker,
+      onUserLocationUpdated: (loc) => _user = loc.position,
       trackCameraPosition: true,
       myLocationEnabled: _locationOn,
       myLocationTrackingMode: _tracking,

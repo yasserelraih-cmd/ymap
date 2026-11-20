@@ -94,4 +94,90 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get view2d => 'Flat view';
+
+  @override
+  String get nearbyTitle => 'Nearby';
+
+  @override
+  String get recentTitle => 'Recent searches';
+
+  @override
+  String get clearRecent => 'Clear';
+
+  @override
+  String get noResults => 'No results. Try writing the name another way.';
+
+  @override
+  String get searchError => 'Search failed. Check your internet connection.';
+
+  @override
+  String get catRestaurant => 'Restaurants';
+
+  @override
+  String get catFuel => 'Fuel';
+
+  @override
+  String get catMosque => 'Mosques';
+
+  @override
+  String get catPharmacy => 'Pharmacies';
+
+  @override
+  String get catHospital => 'Hospitals';
+
+  @override
+  String get catBank => 'Banks';
+
+  @override
+  String get directions => 'Directions';
+
+  @override
+  String get copyLocation => 'Copy location';
+
+  @override
+  String get locationCopied => 'Location link copied';
+
+  @override
+  String get directionsSoon => 'Navigation comes in the next step (1.3)';
+
+  @override
+  String get close => 'Close';
+
+  @override
+  String get back => 'Back';
+
+  @override
+  String distanceKm(String km) {
+    return '$km km';
+  }
+
+  @override
+  String distanceM(String m) {
+    return '$m m';
+  }
+
+  @override
+  String get pastedLocation => 'Location from link';
+
+  @override
+  String get shortLinkWeb =>
+      'Short links work in the phone app. In the browser, open the link in Google Maps, then copy the full link or the coordinates and paste them here.';
+
+  @override
+  String get openingLink => 'Opening link…';
+
+  @override
+  String get linkNotFound => 'No location found in this link.';
+
+  @override
+  String get paste => 'Paste';
+
+  @override
+  String get openGoogleMaps => 'Google Maps';
+
+  @override
+  String get openWaze => 'Waze';
+
+  @override
+  String get cantOpen => 'Couldn\'t open the app.';
 }

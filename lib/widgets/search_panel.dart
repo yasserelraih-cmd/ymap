@@ -8,10 +8,12 @@ class SearchPanel extends StatelessWidget {
   const SearchPanel({
     super.key,
     required this.onOpenSettings,
+    required this.onOpenSearch,
     this.scrollController,
   });
 
   final VoidCallback onOpenSettings;
+  final VoidCallback onOpenSearch;
   final ScrollController? scrollController;
 
   @override
@@ -25,7 +27,8 @@ class SearchPanel extends StatelessWidget {
           children: [
             Expanded(
               child: TextField(
-                readOnly: true, // البحث الفعلي في الخطوة 1.2
+                readOnly: true,
+                onTap: onOpenSearch,
                 decoration: InputDecoration(
                   hintText: t.searchHint,
                   prefixIcon: const Icon(Icons.search),

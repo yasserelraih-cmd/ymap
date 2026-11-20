@@ -37,6 +37,8 @@ class MapStyleLoader {
       }
     }
 
+    if (!dark) _applyDayPalette(layers);
+
     if (dark && !layers.any((l) => l['type'] == 'fill-extrusion')) {
       final building3d = (day['layers'] as List)
           .cast<Map<String, dynamic>>()
@@ -55,6 +57,56 @@ class MapStyleLoader {
       }
     }
     return jsonEncode(style);
+  }
+
+  /// ألوان YMAP النهارية: خلفية رمادية مزرقة هادئة، طرق بيضاء واضحة،
+  /// مبانٍ فاتحة، ومساحات خضراء وماء بألوان ناعمة.
+  static void _applyDayPalette(List<Map<String, dynamic>> layers) {
+    void set(Map<String, dynamic> l, String key, Object value) {
+      final paint = (l['paint'] as Map<String, dynamic>?) ?? <String, dynamic>{};
+      paint[key] = value;
+      l['paint'] = paint;
+    }
+
+    for (final l in layers) {
+      final id = l['id'] as String;
+      final type = l['type'] as String;
+      if (id == 'background') {
+        set(l, 'background-color', '#dfe6ef');
+      } else if (id == 'landuse_residential') {
+        set(l, 'fill-color', '#d5dde9');
+      } else if (id == 'park' || id.startsWith('landcover_grass') ||
+          id.startsWith('landcover_wood') || id == 'landuse_cemetery' ||
+          id == 'landuse_pitch') {
+        set(l, 'fill-color', '#c8e3cd');
+      } else if (id == 'water') {
+        set(l, 'fill-color', '#a7c8ef');
+      } else if (id.startsWith('waterway') && type == 'line') {
+        set(l, 'line-color', '#a7c8ef');
+      } else if (id == 'landcover_sand') {
+        set(l, 'fill-color', '#ece6d3');
+      } else if (id == 'building') {
+        set(l, 'fill-color', '#eef2f7');
+        set(l, 'fill-outline-color', '#cdd6e2');
+      } else if (id == 'building-3d') {
+        set(l, 'fill-extrusion-color', '#f3f6fa');
+        set(l, 'fill-extrusion-opacity', 0.9);
+      } else if (type == 'line' && id.contains('rail')) {
+        set(l, 'line-color', '#b7c1ce');
+      } else if (type == 'line' && id.endsWith('_casing')) {
+        set(l, 'line-color', id.contains('motorway') ? '#a9b6c7' : '#c3ccd9');
+      } else if (type == 'line' &&
+          (id.startsWith('road_') || id.startsWith('bridge_') ||
+              id.startsWith('tunnel_')) &&
+          !id.contains('path')) {
+        set(l, 'line-color', '#ffffff');
+      } else if (type == 'symbol' && id.startsWith('highway-name')) {
+        set(l, 'text-color', '#56647a');
+        set(l, 'text-halo-color', '#ffffff');
+      } else if (type == 'symbol' && id.startsWith('poi')) {
+        set(l, 'text-color', '#56647a');
+      }
+    }
   }
 
   Future<Map<String, dynamic>> _base(String url) async {

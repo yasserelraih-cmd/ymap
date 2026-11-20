@@ -33,5 +33,46 @@
   "retry": "إعادة المحاولة",
   "attribution": "© مساهمو OpenStreetMap · OpenFreeMap",
   "view3d": "منظور ثلاثي الأبعاد",
-  "view2d": "منظور مسطّح"
+  "view2d": "منظور مسطّح",
+  "nearbyTitle": "حولك",
+  "recentTitle": "آخر عمليات البحث",
+  "clearRecent": "مسح",
+  "noResults": "لا توجد نتائج. جرّب كتابة الاسم بطريقة أخرى.",
+  "searchError": "تعذّر البحث. تأكد من الاتصال بالإنترنت.",
+  "catRestaurant": "مطاعم",
+  "catFuel": "محطات وقود",
+  "catMosque": "مساجد",
+  "catPharmacy": "صيدليات",
+  "catHospital": "مستشفيات",
+  "catBank": "بنوك",
+  "directions": "المسار",
+  "copyLocation": "نسخ الموقع",
+  "locationCopied": "تم نسخ رابط الموقع",
+  "directionsSoon": "الملاحة تأتي في الخطوة التالية (1.3)",
+  "close": "إغلاق",
+  "back": "رجوع",
+  "distanceKm": "{km} كم",
+  "@distanceKm": {
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
+  "distanceM": "{m} م",
+  "@distanceM": {
+    "placeholders": {
+      "m": {
+        "type": "String"
+      }
+    }
+  },
+  "pastedLocation": "موقع من الرابط",
+  "shortLinkWeb": "الروابط المختصرة تعمل في تطبيق الجوال. في المتصفح افتح الرابط في Google Maps ثم انسخ الرابط الكامل أو الإحداثيات والصقها هنا.",
+  "openingLink": "جارٍ فتح الرابط…",
+  "linkNotFound": "لم أجد موقعاً في هذا الرابط.",
+  "paste": "لصق",
+  "openGoogleMaps": "Google Maps",
+  "openWaze": "Waze",
+  "cantOpen": "تعذّر فتح التطبيق."
 }

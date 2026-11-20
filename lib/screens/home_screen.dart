@@ -2,9 +2,14 @@ import 'package:material_ui/material_ui.dart';
 
 import '../l10n/app_localizations.dart';
 import '../map/ymap_map.dart';
+import '../search/place.dart';
+import '../search/recent_searches.dart';
+import '../search/search_service.dart';
 import '../state/settings_controller.dart';
+import '../widgets/place_card.dart';
 import '../widgets/search_panel.dart';
 import '../widgets/settings_sheet.dart';
+import 'search_screen.dart';
 
 /// يبني طبقة الخريطة. في الاختبارات نمرر بديلاً لا يحتاج إنترنت.
 typedef MapBuilder = Widget Function(
@@ -18,10 +23,16 @@ typedef MapBuilder = Widget Function(
 /// - الجوال: الخريطة بكامل الشاشة + بطاقة سفلية قابلة للسحب.
 /// - التابلت والآيباد (عرض 700 فأكثر): لوحة جانبية بجانب الخريطة.
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, required this.settings, this.mapBuilder});
+  const HomeScreen({
+    super.key,
+    required this.settings,
+    this.mapBuilder,
+    this.searchService,
+  });
 
   final SettingsController settings;
   final MapBuilder? mapBuilder;
+  final SearchService? searchService;
 
   static const tabletBreakpoint = 700.0;
   static const sidePanelWidth = 380.0;
@@ -32,7 +43,55 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final _mapKey = GlobalKey<YmapMapState>();
+  final _recent = RecentSearches();
+  late final SearchService _search =
+      widget.searchService ?? PhotonSearchService();
   bool _is3D = false;
+  Place? _place; // المكان المختار من البحث
+
+  Future<void> _openSearch() async {
+    final map = _mapKey.currentState;
+    final near = map?.userLocation ?? map?.center;
+    final place = await Navigator.of(context).push<Place>(
+      MaterialPageRoute(
+        builder: (_) => SearchScreen(
+          service: _search,
+          recent: _recent,
+          nearLat: near?.latitude ?? YmapMap.riyadh.latitude,
+          nearLon: near?.longitude ?? YmapMap.riyadh.longitude,
+        ),
+      ),
+    );
+    if (place == null || !mounted) return;
+    setState(() => _place = place);
+    await _mapKey.currentState?.showPlace(place.lat, place.lon);
+  }
+
+  Future<void> _closePlace() async {
+    setState(() => _place = null);
+    await _mapKey.currentState?.clearPlace();
+  }
+
+  Widget _panel({ScrollController? scrollController}) {
+    final place = _place;
+    if (place != null) {
+      final user = _mapKey.currentState?.userLocation;
+      return PlaceCard(
+        key: ValueKey(place.key),
+        place: place,
+        fromLat: user?.latitude,
+        fromLon: user?.longitude,
+        onClose: _closePlace,
+        onMessage: _showMessage,
+        scrollController: scrollController,
+      );
+    }
+    return SearchPanel(
+      onOpenSettings: () => showSettingsSheet(context, widget.settings),
+      onOpenSearch: _openSearch,
+      scrollController: scrollController,
+    );
+  }
 
   void _showMessage(String message) {
     ScaffoldMessenger.of(context)
@@ -59,8 +118,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    void openSettings() => showSettingsSheet(context, widget.settings);
-
     return Scaffold(
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -88,13 +145,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     clipBehavior: Clip.antiAlias,
                     child: Padding(
                       padding: const EdgeInsets.only(top: 12),
-                      child: SearchPanel(onOpenSettings: openSettings),
+                      child: _panel(),
                     ),
                   ),
                 )
               else
                 DraggableScrollableSheet(
-                  initialChildSize: 0.22,
+                  // بطاقة المكان تفتح أطول لتظهر كل أزرارها.
+                  key: ValueKey(_place?.key ?? 'search'),
+                  initialChildSize: _place == null ? 0.22 : 0.36,
                   minChildSize: 0.12,
                   maxChildSize: 0.85,
                   builder: (context, scrollController) => Material(
@@ -107,10 +166,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         const _DragHandle(),
                         Expanded(
-                          child: SearchPanel(
-                            onOpenSettings: openSettings,
-                            scrollController: scrollController,
-                          ),
+                          child: _panel(scrollController: scrollController),
                         ),
                       ],
                     ),

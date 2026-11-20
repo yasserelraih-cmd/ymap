@@ -2,14 +2,21 @@ import 'package:material_ui/material_ui.dart';
 
 import 'l10n/app_localizations.dart';
 import 'screens/home_screen.dart';
+import 'search/search_service.dart';
 import 'state/settings_controller.dart';
 import 'theme/ymap_theme.dart';
 
 class YmapApp extends StatelessWidget {
-  const YmapApp({super.key, required this.settings, this.mapBuilder});
+  const YmapApp({
+    super.key,
+    required this.settings,
+    this.mapBuilder,
+    this.searchService,
+  });
 
   final SettingsController settings;
   final MapBuilder? mapBuilder;
+  final SearchService? searchService;
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +41,11 @@ class YmapApp extends StatelessWidget {
           }
           return const Locale('ar');
         },
-        home: HomeScreen(settings: settings, mapBuilder: mapBuilder),
+        home: HomeScreen(
+          settings: settings,
+          mapBuilder: mapBuilder,
+          searchService: searchService,
+        ),
       ),
     );
   }

@@ -259,6 +259,168 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'منظور مسطّح'**
   String get view2d;
+
+  /// No description provided for @nearbyTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'حولك'**
+  String get nearbyTitle;
+
+  /// No description provided for @recentTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'آخر عمليات البحث'**
+  String get recentTitle;
+
+  /// No description provided for @clearRecent.
+  ///
+  /// In ar, this message translates to:
+  /// **'مسح'**
+  String get clearRecent;
+
+  /// No description provided for @noResults.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا توجد نتائج. جرّب كتابة الاسم بطريقة أخرى.'**
+  String get noResults;
+
+  /// No description provided for @searchError.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر البحث. تأكد من الاتصال بالإنترنت.'**
+  String get searchError;
+
+  /// No description provided for @catRestaurant.
+  ///
+  /// In ar, this message translates to:
+  /// **'مطاعم'**
+  String get catRestaurant;
+
+  /// No description provided for @catFuel.
+  ///
+  /// In ar, this message translates to:
+  /// **'محطات وقود'**
+  String get catFuel;
+
+  /// No description provided for @catMosque.
+  ///
+  /// In ar, this message translates to:
+  /// **'مساجد'**
+  String get catMosque;
+
+  /// No description provided for @catPharmacy.
+  ///
+  /// In ar, this message translates to:
+  /// **'صيدليات'**
+  String get catPharmacy;
+
+  /// No description provided for @catHospital.
+  ///
+  /// In ar, this message translates to:
+  /// **'مستشفيات'**
+  String get catHospital;
+
+  /// No description provided for @catBank.
+  ///
+  /// In ar, this message translates to:
+  /// **'بنوك'**
+  String get catBank;
+
+  /// No description provided for @directions.
+  ///
+  /// In ar, this message translates to:
+  /// **'المسار'**
+  String get directions;
+
+  /// No description provided for @copyLocation.
+  ///
+  /// In ar, this message translates to:
+  /// **'نسخ الموقع'**
+  String get copyLocation;
+
+  /// No description provided for @locationCopied.
+  ///
+  /// In ar, this message translates to:
+  /// **'تم نسخ رابط الموقع'**
+  String get locationCopied;
+
+  /// No description provided for @directionsSoon.
+  ///
+  /// In ar, this message translates to:
+  /// **'الملاحة تأتي في الخطوة التالية (1.3)'**
+  String get directionsSoon;
+
+  /// No description provided for @close.
+  ///
+  /// In ar, this message translates to:
+  /// **'إغلاق'**
+  String get close;
+
+  /// No description provided for @back.
+  ///
+  /// In ar, this message translates to:
+  /// **'رجوع'**
+  String get back;
+
+  /// No description provided for @distanceKm.
+  ///
+  /// In ar, this message translates to:
+  /// **'{km} كم'**
+  String distanceKm(String km);
+
+  /// No description provided for @distanceM.
+  ///
+  /// In ar, this message translates to:
+  /// **'{m} م'**
+  String distanceM(String m);
+
+  /// No description provided for @pastedLocation.
+  ///
+  /// In ar, this message translates to:
+  /// **'موقع من الرابط'**
+  String get pastedLocation;
+
+  /// No description provided for @shortLinkWeb.
+  ///
+  /// In ar, this message translates to:
+  /// **'الروابط المختصرة تعمل في تطبيق الجوال. في المتصفح افتح الرابط في Google Maps ثم انسخ الرابط الكامل أو الإحداثيات والصقها هنا.'**
+  String get shortLinkWeb;
+
+  /// No description provided for @openingLink.
+  ///
+  /// In ar, this message translates to:
+  /// **'جارٍ فتح الرابط…'**
+  String get openingLink;
+
+  /// No description provided for @linkNotFound.
+  ///
+  /// In ar, this message translates to:
+  /// **'لم أجد موقعاً في هذا الرابط.'**
+  String get linkNotFound;
+
+  /// No description provided for @paste.
+  ///
+  /// In ar, this message translates to:
+  /// **'لصق'**
+  String get paste;
+
+  /// No description provided for @openGoogleMaps.
+  ///
+  /// In ar, this message translates to:
+  /// **'Google Maps'**
+  String get openGoogleMaps;
+
+  /// No description provided for @openWaze.
+  ///
+  /// In ar, this message translates to:
+  /// **'Waze'**
+  String get openWaze;
+
+  /// No description provided for @cantOpen.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر فتح التطبيق.'**
+  String get cantOpen;
 }
 
 class _AppLocalizationsDelegate
