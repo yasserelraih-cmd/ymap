@@ -4,6 +4,7 @@ import 'dart:math' show Point;
 import 'package:maplibre_gl/maplibre_gl.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../alerts/road_alert.dart';
 import '../l10n/app_localizations.dart';
 import '../routing/route.dart';
 import 'location_service.dart';
@@ -170,6 +171,38 @@ class YmapMapState extends State<YmapMap> {
   bool _puckFollow = false;
 
   /// يرسم موقعك أثناء الملاحة (دائرة زرقاء بحافة بيضاء وهالة).
+  // ===== التنبيهات (كاميرات/حوادث/زحام) =====
+  List<RoadAlert> _alerts = const [];
+  final List<Circle> _alertCircles = [];
+
+  Future<void> showAlerts(List<RoadAlert> alerts) async {
+    _alerts = alerts;
+    await _drawAlerts();
+  }
+
+  Future<void> _drawAlerts() async {
+    final c = _controller;
+    if (c == null) return;
+    if (_alertCircles.isNotEmpty) {
+      try {
+        await c.removeCircles(List.of(_alertCircles));
+      } catch (_) {}
+      _alertCircles.clear();
+    }
+    if (_alerts.isEmpty) return;
+    final added = await c.addCircles([
+      for (final a in _alerts)
+        CircleOptions(
+          geometry: LatLng(a.lat, a.lon),
+          circleRadius: 8,
+          circleColor: a.type.color,
+          circleStrokeColor: '#FFFFFF',
+          circleStrokeWidth: 3,
+        ),
+    ]);
+    _alertCircles.addAll(added);
+  }
+
   Future<void> setPuck(double lat, double lon) async {
     final c = _controller;
     if (c == null) return;
@@ -466,6 +499,8 @@ class YmapMapState extends State<YmapMap> {
       onStyleLoadedCallback: () async {
         await _drawRoutes();
         await _drawPlaceMarker();
+        _alertCircles.clear();
+        await _drawAlerts();
         final puck = _puckAt;
         if (puck != null) {
           _puckHalo = null;

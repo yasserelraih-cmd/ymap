@@ -180,5 +180,27 @@
   "navView3D": "عرض ثلاثي الأبعاد",
   "navViewHeading": "عرض باتجاه السير",
   "navViewNorth": "الشمال للأعلى",
-  "report": "إبلاغ"
+  "report": "إبلاغ",
+  "cameraAlerts": "تنبيهات الكاميرات",
+  "cameraAlertsHint": "أوقفها إذا كانت ممنوعة في الدولة التي تقود فيها",
+  "metersShort": "م",
+  "reportTitle": "إبلاغ عن شيء على الطريق",
+  "alertCamera": "كاميرا",
+  "alertAccident": "حادث",
+  "alertTraffic": "زحام",
+  "alertHazard": "خطر على الطريق",
+  "reportThanks": "شكراً، سجّلنا البلاغ وسننبهك عنده",
+  "alertSpeech": "{distance}، {what}",
+  "@alertSpeech": {
+    "placeholders": {
+      "distance": {
+        "type": "String"
+      },
+      "what": {
+        "type": "String"
+      }
+    }
+  },
+  "speedCameraSpeech": "كاميرا سرعة",
+  "overSpeedSpeech": "انتبه، تجاوزت السرعة المحددة"
 }

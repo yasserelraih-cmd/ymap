@@ -13,6 +13,10 @@ import '../navigation/voice_guide.dart';
 import '../routing/instructions.dart';
 import '../routing/route.dart';
 import '../routing/routing_service.dart';
+import '../alerts/alert_watcher.dart';
+import '../alerts/osm_cameras.dart';
+import '../alerts/road_alert.dart';
+import '../routing/speed_limits.dart';
 import '../saved/saved_places.dart';
 import '../search/place.dart';
 import '../search/recent_searches.dart';
@@ -138,6 +142,16 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _navOverview = false;
   bool _rerouting = false;
   NavViewMode _navView = NavViewMode.threeD;
+
+  // ===== التنبيهات وحدود السرعة =====
+  final _alertStore = AlertStore();
+  final _cameras = OsmCameraService();
+  final _limitsService = SpeedLimitService();
+  AlertWatcher? _watcher;
+  SpeedLimits _limits = SpeedLimits.empty;
+  UpcomingAlert? _upcoming;
+  int? _limitNow;
+  int? _overSpeedWarnedFor;
   TravelMode _mode = TravelMode.drive;
 
   bool get _navigating => _navRoute != null;
@@ -165,7 +179,88 @@ class _HomeScreenState extends State<HomeScreen> {
     });
     await _mapKey.currentState?.showRoutes([route], 0);
     _track(route, simulate: simulate, lang: lang);
+    unawaited(_loadRoadData(route));
   }
+
+  /// نحمّل بلاغاتك وكاميرات OSM وحدود السرعة مرة واحدة عند بدء الملاحة،
+  /// ثم تعمل التنبيهات بدون إنترنت.
+  Future<void> _loadRoadData(RouteResult route) async {
+    final mine = await _alertStore.load();
+    _watcher = AlertWatcher(_visibleAlerts(mine));
+    unawaited(_mapKey.currentState?.showAlerts(_watcher!.alerts));
+    if (_mode == TravelMode.drive) {
+      unawaited(_limitsService.forRoute(route).then((l) {
+        if (identical(_navRoute, route)) _limits = l;
+      }));
+    }
+    final osm = await _cameras.alongRoute(route);
+    if (!mounted || !identical(_navRoute, route) || osm.isEmpty) return;
+    _watcher!.alerts = _visibleAlerts([...mine, ...osm]);
+    unawaited(_mapKey.currentState?.showAlerts(_watcher!.alerts));
+  }
+
+  List<RoadAlert> _visibleAlerts(List<RoadAlert> all) => widget.settings.cameraAlerts
+      ? all
+      : all.where((a) => a.type != AlertType.camera).toList();
+
+  Future<void> _report() async {
+    final s = _navState;
+    if (s == null) return;
+    final t = AppLocalizations.of(context);
+    final type = await showModalBottomSheet<AlertType>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(t.reportTitle, style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                alignment: WrapAlignment.center,
+                children: [
+                  for (final (type, label) in [
+                    (AlertType.camera, t.alertCamera),
+                    (AlertType.accident, t.alertAccident),
+                    (AlertType.traffic, t.alertTraffic),
+                    (AlertType.hazard, t.alertHazard),
+                  ])
+                    SizedBox(
+                      width: 140,
+                      height: 72,
+                      child: FilledButton.tonalIcon(
+                        onPressed: () => Navigator.of(context).pop(type),
+                        icon: Icon(alertIcon(type)),
+                        label: Text(label),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (type == null || !mounted) return;
+    final alert = await _alertStore.add(type, s.snappedLat, s.snappedLon);
+    final w = _watcher;
+    if (w != null) {
+      w.alerts = [...w.alerts, alert];
+      unawaited(_mapKey.currentState?.showAlerts(w.alerts));
+    }
+    _showMessage(t.reportThanks);
+  }
+
+  String _alertName(AppLocalizations t, AlertType type) => switch (type) {
+        AlertType.camera => t.speedCameraSpeech,
+        AlertType.accident => t.alertAccident,
+        AlertType.traffic => t.alertTraffic,
+        AlertType.hazard => t.alertHazard,
+      };
 
   void _track(RouteResult route, {required bool simulate, required String lang}) {
     _engine = NavigationEngine(route);
@@ -203,6 +298,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     final say = _voice?.next(s, speedMps: speed);
     if (say != null) unawaited(_speaker.say(say));
+    _checkAlertsAndSpeed(s, lat, lon, speed);
     if (s.offRoute && !_rerouting && !(_source?.isSimulation ?? true)) {
       unawaited(_reroute(fix));
     }
@@ -215,6 +311,40 @@ class _HomeScreenState extends State<HomeScreen> {
       try {
         await WakelockPlus.disable();
       } catch (_) {}
+    }
+  }
+
+  void _checkAlertsAndSpeed(NavState s, double lat, double lon, double speed) {
+    final t = AppLocalizations.of(context);
+    final heading = s.bearing;
+    final w = _watcher;
+    UpcomingAlert? upcoming;
+    if (w != null) {
+      upcoming = w.nearestAhead(lat, lon, heading, speedMps: speed);
+      final announce = w.toAnnounce(lat, lon, heading, speedMps: speed);
+      if (announce != null && _voice != null) {
+        unawaited(_speaker.say(t.alertSpeech(
+            _voice!.distancePhrase(announce.distanceM),
+            _alertName(t, announce.alert.type))));
+      }
+    }
+    final limit = _limits.at(s.progressM);
+    if (limit != null && speed * 3.6 > limit + 5) {
+      if (_overSpeedWarnedFor != limit) {
+        _overSpeedWarnedFor = limit;
+        unawaited(_speaker.say(t.overSpeedSpeech));
+      }
+    } else if (limit == null || speed * 3.6 < limit) {
+      _overSpeedWarnedFor = null;
+    }
+    if (upcoming?.alert.id != _upcoming?.alert.id ||
+        (upcoming != null && _upcoming != null &&
+            (upcoming.distanceM - _upcoming!.distanceM).abs() > 10) ||
+        limit != _limitNow) {
+      setState(() {
+        _upcoming = upcoming;
+        _limitNow = limit;
+      });
     }
   }
 
@@ -242,6 +372,12 @@ class _HomeScreenState extends State<HomeScreen> {
       });
       _engine = NavigationEngine(route);
       _voice = VoiceGuide(route, lang: lang);
+      _limits = SpeedLimits.empty;
+      if (_mode == TravelMode.drive) {
+        unawaited(_limitsService.forRoute(route).then((l) {
+          if (identical(_navRoute, route)) _limits = l;
+        }));
+      }
       await _mapKey.currentState?.showRoutes([route], 0);
     } catch (_) {
       // نحاول مرة أخرى مع القراءة التالية خارج المسار.
@@ -293,6 +429,11 @@ class _HomeScreenState extends State<HomeScreen> {
     _source = null;
     _engine = null;
     _voice = null;
+    _watcher = null;
+    _limits = SpeedLimits.empty;
+    _upcoming = null;
+    _limitNow = null;
+    _overSpeedWarnedFor = null;
     await _speaker.stop();
     try {
       await WakelockPlus.disable();
@@ -304,6 +445,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
     final map = _mapKey.currentState;
     await map?.clearPuck();
+    await map?.showAlerts(const []);
     final routes = _routes;
     if (routes != null && routes.isNotEmpty) {
       await map?.showRoutes(routes, _selectedRoute, padding: _routePadding());
@@ -536,6 +678,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     onEnd: _endNavigation,
                     viewMode: _navView,
                     onCycleView: _cycleNavView,
+                    onReport: _mode == TravelMode.drive ? _report : null,
+                    speedLimitKmh: _limitNow,
+                    upcomingAlert: _upcoming?.alert.type,
+                    upcomingAlertM: _upcoming?.distanceM,
                   ),
                 ),
               ],

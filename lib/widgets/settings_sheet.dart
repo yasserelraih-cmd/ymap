@@ -3,6 +3,10 @@ import 'package:material_ui/material_ui.dart';
 import '../l10n/app_localizations.dart';
 import '../state/settings_controller.dart';
 
+
+/// رقم الإصدار المعروض في الإعدادات.
+const appVersion = '0.8.0';
+
 /// نافذة الإعدادات: اللغة والمظهر (نهاري/ليلي/تلقائي).
 Future<void> showSettingsSheet(
   BuildContext context,
@@ -61,9 +65,17 @@ Future<void> showSettingsSheet(
                   selected: {settings.themeMode},
                   onSelectionChanged: (s) => settings.setThemeMode(s.first),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 12),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(t.cameraAlerts),
+                  subtitle: Text(t.cameraAlertsHint),
+                  value: settings.cameraAlerts,
+                  onChanged: settings.setCameraAlerts,
+                ),
+                const SizedBox(height: 12),
                 Text(
-                  t.version('0.1.0'),
+                  t.version(appVersion),
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),

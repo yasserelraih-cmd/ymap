@@ -5,6 +5,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 class SettingsController extends ChangeNotifier {
   static const _kLanguage = 'language'; // 'ar' أو 'en' أو 'system'
   static const _kTheme = 'theme'; // 'light' أو 'dark' أو 'system'
+  static const _kCameraAlerts = 'camera_alerts';
+
+  /// تنبيهات الكاميرات (يمكن إيقافها في الدول التي تمنعها).
+  bool cameraAlerts = true;
 
   Locale? _locale; // null = حسب لغة الجهاز
   ThemeMode _themeMode = ThemeMode.system;
@@ -21,7 +25,15 @@ class SettingsController extends ChangeNotifier {
       'dark' => ThemeMode.dark,
       _ => ThemeMode.system,
     };
+    cameraAlerts = prefs.getBool(_kCameraAlerts) ?? true;
     notifyListeners();
+  }
+
+  Future<void> setCameraAlerts(bool on) async {
+    cameraAlerts = on;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kCameraAlerts, on);
   }
 
   Future<void> setLanguage(String code) async {

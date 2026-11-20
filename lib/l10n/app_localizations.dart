@@ -727,6 +727,78 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'إبلاغ'**
   String get report;
+
+  /// No description provided for @cameraAlerts.
+  ///
+  /// In ar, this message translates to:
+  /// **'تنبيهات الكاميرات'**
+  String get cameraAlerts;
+
+  /// No description provided for @cameraAlertsHint.
+  ///
+  /// In ar, this message translates to:
+  /// **'أوقفها إذا كانت ممنوعة في الدولة التي تقود فيها'**
+  String get cameraAlertsHint;
+
+  /// No description provided for @metersShort.
+  ///
+  /// In ar, this message translates to:
+  /// **'م'**
+  String get metersShort;
+
+  /// No description provided for @reportTitle.
+  ///
+  /// In ar, this message translates to:
+  /// **'إبلاغ عن شيء على الطريق'**
+  String get reportTitle;
+
+  /// No description provided for @alertCamera.
+  ///
+  /// In ar, this message translates to:
+  /// **'كاميرا'**
+  String get alertCamera;
+
+  /// No description provided for @alertAccident.
+  ///
+  /// In ar, this message translates to:
+  /// **'حادث'**
+  String get alertAccident;
+
+  /// No description provided for @alertTraffic.
+  ///
+  /// In ar, this message translates to:
+  /// **'زحام'**
+  String get alertTraffic;
+
+  /// No description provided for @alertHazard.
+  ///
+  /// In ar, this message translates to:
+  /// **'خطر على الطريق'**
+  String get alertHazard;
+
+  /// No description provided for @reportThanks.
+  ///
+  /// In ar, this message translates to:
+  /// **'شكراً، سجّلنا البلاغ وسننبهك عنده'**
+  String get reportThanks;
+
+  /// No description provided for @alertSpeech.
+  ///
+  /// In ar, this message translates to:
+  /// **'{distance}، {what}'**
+  String alertSpeech(String distance, String what);
+
+  /// No description provided for @speedCameraSpeech.
+  ///
+  /// In ar, this message translates to:
+  /// **'كاميرا سرعة'**
+  String get speedCameraSpeech;
+
+  /// No description provided for @overSpeedSpeech.
+  ///
+  /// In ar, this message translates to:
+  /// **'انتبه، تجاوزت السرعة المحددة'**
+  String get overSpeedSpeech;
 }
 
 class _AppLocalizationsDelegate

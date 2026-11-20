@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../alerts/road_alert.dart';
 import '../l10n/app_localizations.dart';
 import '../routing/instructions.dart';
 import '../routing/route.dart';
@@ -31,11 +32,21 @@ class NavigationView extends StatelessWidget {
     required this.onToggleOverview,
     required this.onEnd,
     this.viewMode = NavViewMode.threeD,
+    this.speedLimitKmh,
+    this.upcomingAlert,
+    this.upcomingAlertM,
     this.onCycleView,
     this.onReport,
   });
 
   final NavViewMode viewMode;
+
+  /// حد السرعة للطريق الحالي (إن كان معروفاً).
+  final int? speedLimitKmh;
+
+  /// أقرب تنبيه أمامك (نوعه ومسافته).
+  final AlertType? upcomingAlert;
+  final double? upcomingAlertM;
   final VoidCallback? onCycleView;
 
   /// زر الإبلاغ (كاميرا/حادث/زحام) — يُفعّل في الخطوة 1.7.
@@ -76,7 +87,24 @@ class NavigationView extends StatelessWidget {
         PositionedDirectional(
           start: 16,
           top: top + 136,
-          child: _SpeedBubble(speedKmh: speedMps * 3.6, unit: t.navKmh),
+          child: Column(
+            children: [
+              _SpeedBubble(
+                speedKmh: speedMps * 3.6,
+                unit: t.navKmh,
+                over: speedLimitKmh != null &&
+                    speedMps * 3.6 > speedLimitKmh! + 5,
+              ),
+              if (speedLimitKmh != null) ...[
+                const SizedBox(height: 8),
+                _LimitSign(limit: speedLimitKmh!),
+              ],
+              if (upcomingAlert != null && upcomingAlertM != null) ...[
+                const SizedBox(height: 8),
+                _AlertChip(type: upcomingAlert!, meters: upcomingAlertM!),
+              ],
+            ],
+          ),
         ),
         // أزرار جانبية.
         PositionedDirectional(
@@ -276,10 +304,76 @@ class _Banner extends StatelessWidget {
       );
 }
 
+/// إشارة حد السرعة (دائرة حمراء).
+class _LimitSign extends StatelessWidget {
+  const _LimitSign({required this.limit});
+  final int limit;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 52,
+      height: 52,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+        border: Border.all(color: const Color(0xFFE5484D), width: 5),
+        boxShadow: const [BoxShadow(blurRadius: 6, color: Colors.black26)],
+      ),
+      child: Text(
+        '$limit',
+        style: const TextStyle(
+            fontWeight: FontWeight.bold, fontSize: 17, color: Colors.black),
+      ),
+    );
+  }
+}
+
+/// تنبيه قادم: كاميرا / حادث / زحام / خطر.
+class _AlertChip extends StatelessWidget {
+  const _AlertChip({required this.type, required this.meters});
+  final AlertType type;
+  final double meters;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Color(int.parse('FF${type.color.substring(1)}', radix: 16));
+    return Container(
+      width: 76,
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: const [BoxShadow(blurRadius: 6, color: Colors.black26)],
+      ),
+      child: Column(
+        children: [
+          Icon(alertIcon(type), color: Colors.white),
+          Text(
+            '${(meters / 10).round() * 10} ${AppLocalizations.of(context).metersShort}',
+            style: const TextStyle(
+                color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+IconData alertIcon(AlertType t) => switch (t) {
+      AlertType.camera => Icons.photo_camera,
+      AlertType.accident => Icons.car_crash,
+      AlertType.traffic => Icons.traffic,
+      AlertType.hazard => Icons.warning_amber,
+    };
+
 class _SpeedBubble extends StatelessWidget {
-  const _SpeedBubble({required this.speedKmh, required this.unit});
+  const _SpeedBubble(
+      {required this.speedKmh, required this.unit, this.over = false});
   final double speedKmh;
   final String unit;
+  final bool over;
 
   @override
   Widget build(BuildContext context) {
@@ -287,10 +381,10 @@ class _SpeedBubble extends StatelessWidget {
     return Container(
       width: 76,
       height: 76,
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: over ? const Color(0xFFE5484D) : Colors.white,
         shape: BoxShape.circle,
-        boxShadow: [BoxShadow(blurRadius: 10, color: Colors.black26)],
+        boxShadow: const [BoxShadow(blurRadius: 10, color: Colors.black26)],
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -298,12 +392,14 @@ class _SpeedBubble extends StatelessWidget {
           Text(
             speedKmh.round().toString(),
             style: text.headlineSmall?.copyWith(
-              color: NavColors.accent,
+              color: over ? Colors.white : NavColors.accent,
               fontWeight: FontWeight.bold,
               height: 1.0,
             ),
           ),
-          Text(unit, style: text.labelSmall?.copyWith(color: NavColors.accent)),
+          Text(unit,
+              style: text.labelSmall
+                  ?.copyWith(color: over ? Colors.white : NavColors.accent)),
         ],
       ),
     );

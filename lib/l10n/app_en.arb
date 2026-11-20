@@ -104,5 +104,17 @@
   "navView3D": "3D view",
   "navViewHeading": "Heading up",
   "navViewNorth": "North up",
-  "report": "Report"
+  "report": "Report",
+  "cameraAlerts": "Camera alerts",
+  "cameraAlertsHint": "Turn off where camera alerts are not allowed",
+  "metersShort": "m",
+  "reportTitle": "Report something on the road",
+  "alertCamera": "Camera",
+  "alertAccident": "Accident",
+  "alertTraffic": "Traffic",
+  "alertHazard": "Road hazard",
+  "reportThanks": "Thanks — report saved, we'll alert you there",
+  "alertSpeech": "{distance}, {what}",
+  "speedCameraSpeech": "speed camera",
+  "overSpeedSpeech": "Careful, you are over the speed limit"
 }

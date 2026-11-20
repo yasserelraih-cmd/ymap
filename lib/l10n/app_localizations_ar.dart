@@ -348,4 +348,43 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get report => 'إبلاغ';
+
+  @override
+  String get cameraAlerts => 'تنبيهات الكاميرات';
+
+  @override
+  String get cameraAlertsHint =>
+      'أوقفها إذا كانت ممنوعة في الدولة التي تقود فيها';
+
+  @override
+  String get metersShort => 'م';
+
+  @override
+  String get reportTitle => 'إبلاغ عن شيء على الطريق';
+
+  @override
+  String get alertCamera => 'كاميرا';
+
+  @override
+  String get alertAccident => 'حادث';
+
+  @override
+  String get alertTraffic => 'زحام';
+
+  @override
+  String get alertHazard => 'خطر على الطريق';
+
+  @override
+  String get reportThanks => 'شكراً، سجّلنا البلاغ وسننبهك عنده';
+
+  @override
+  String alertSpeech(String distance, String what) {
+    return '$distance، $what';
+  }
+
+  @override
+  String get speedCameraSpeech => 'كاميرا سرعة';
+
+  @override
+  String get overSpeedSpeech => 'انتبه، تجاوزت السرعة المحددة';
 }

@@ -349,4 +349,42 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get report => 'Report';
+
+  @override
+  String get cameraAlerts => 'Camera alerts';
+
+  @override
+  String get cameraAlertsHint => 'Turn off where camera alerts are not allowed';
+
+  @override
+  String get metersShort => 'm';
+
+  @override
+  String get reportTitle => 'Report something on the road';
+
+  @override
+  String get alertCamera => 'Camera';
+
+  @override
+  String get alertAccident => 'Accident';
+
+  @override
+  String get alertTraffic => 'Traffic';
+
+  @override
+  String get alertHazard => 'Road hazard';
+
+  @override
+  String get reportThanks => 'Thanks — report saved, we\'ll alert you there';
+
+  @override
+  String alertSpeech(String distance, String what) {
+    return '$distance, $what';
+  }
+
+  @override
+  String get speedCameraSpeech => 'speed camera';
+
+  @override
+  String get overSpeedSpeech => 'Careful, you are over the speed limit';
 }
