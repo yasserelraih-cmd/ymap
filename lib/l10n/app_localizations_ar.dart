@@ -224,4 +224,53 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get tolls => 'رسوم';
+
+  @override
+  String get navThen => 'ثم';
+
+  @override
+  String get navKmh => 'كم/س';
+
+  @override
+  String get navEnd => 'إنهاء';
+
+  @override
+  String navRemaining(String time, String dist) {
+    return '$time · $dist';
+  }
+
+  @override
+  String get navRerouting => 'جارٍ إعادة حساب المسار…';
+
+  @override
+  String get navArrived => 'وصلت إلى وجهتك';
+
+  @override
+  String get navPreview => 'معاينة';
+
+  @override
+  String get navPreviewBadge => 'معاينة القيادة';
+
+  @override
+  String get navMute => 'كتم الصوت';
+
+  @override
+  String get navUnmute => 'تشغيل الصوت';
+
+  @override
+  String get navOverview => 'عرض المسار كاملاً';
+
+  @override
+  String get navRecenter => 'العودة لموقعي';
+
+  @override
+  String get navStartSpeech => 'لنبدأ.';
+
+  @override
+  String get navRerouteSpeech => 'خرجت عن المسار، جارٍ إعادة الحساب';
+
+  @override
+  String navCurrentStreet(String street) {
+    return 'على $street';
+  }
 }

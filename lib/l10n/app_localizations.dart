@@ -493,6 +493,96 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'رسوم'**
   String get tolls;
+
+  /// No description provided for @navThen.
+  ///
+  /// In ar, this message translates to:
+  /// **'ثم'**
+  String get navThen;
+
+  /// No description provided for @navKmh.
+  ///
+  /// In ar, this message translates to:
+  /// **'كم/س'**
+  String get navKmh;
+
+  /// No description provided for @navEnd.
+  ///
+  /// In ar, this message translates to:
+  /// **'إنهاء'**
+  String get navEnd;
+
+  /// No description provided for @navRemaining.
+  ///
+  /// In ar, this message translates to:
+  /// **'{time} · {dist}'**
+  String navRemaining(String time, String dist);
+
+  /// No description provided for @navRerouting.
+  ///
+  /// In ar, this message translates to:
+  /// **'جارٍ إعادة حساب المسار…'**
+  String get navRerouting;
+
+  /// No description provided for @navArrived.
+  ///
+  /// In ar, this message translates to:
+  /// **'وصلت إلى وجهتك'**
+  String get navArrived;
+
+  /// No description provided for @navPreview.
+  ///
+  /// In ar, this message translates to:
+  /// **'معاينة'**
+  String get navPreview;
+
+  /// No description provided for @navPreviewBadge.
+  ///
+  /// In ar, this message translates to:
+  /// **'معاينة القيادة'**
+  String get navPreviewBadge;
+
+  /// No description provided for @navMute.
+  ///
+  /// In ar, this message translates to:
+  /// **'كتم الصوت'**
+  String get navMute;
+
+  /// No description provided for @navUnmute.
+  ///
+  /// In ar, this message translates to:
+  /// **'تشغيل الصوت'**
+  String get navUnmute;
+
+  /// No description provided for @navOverview.
+  ///
+  /// In ar, this message translates to:
+  /// **'عرض المسار كاملاً'**
+  String get navOverview;
+
+  /// No description provided for @navRecenter.
+  ///
+  /// In ar, this message translates to:
+  /// **'العودة لموقعي'**
+  String get navRecenter;
+
+  /// No description provided for @navStartSpeech.
+  ///
+  /// In ar, this message translates to:
+  /// **'لنبدأ.'**
+  String get navStartSpeech;
+
+  /// No description provided for @navRerouteSpeech.
+  ///
+  /// In ar, this message translates to:
+  /// **'خرجت عن المسار، جارٍ إعادة الحساب'**
+  String get navRerouteSpeech;
+
+  /// No description provided for @navCurrentStreet.
+  ///
+  /// In ar, this message translates to:
+  /// **'على {street}'**
+  String navCurrentStreet(String street);
 }
 
 class _AppLocalizationsDelegate

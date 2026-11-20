@@ -226,4 +226,53 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tolls => 'Tolls';
+
+  @override
+  String get navThen => 'Then';
+
+  @override
+  String get navKmh => 'km/h';
+
+  @override
+  String get navEnd => 'End';
+
+  @override
+  String navRemaining(String time, String dist) {
+    return '$time · $dist';
+  }
+
+  @override
+  String get navRerouting => 'Rerouting…';
+
+  @override
+  String get navArrived => 'You have arrived';
+
+  @override
+  String get navPreview => 'Preview';
+
+  @override
+  String get navPreviewBadge => 'Drive preview';
+
+  @override
+  String get navMute => 'Mute';
+
+  @override
+  String get navUnmute => 'Unmute';
+
+  @override
+  String get navOverview => 'Route overview';
+
+  @override
+  String get navRecenter => 'Back to my location';
+
+  @override
+  String get navStartSpeech => 'Let\'s go.';
+
+  @override
+  String get navRerouteSpeech => 'You left the route, recalculating';
+
+  @override
+  String navCurrentStreet(String street) {
+    return 'On $street';
+  }
 }

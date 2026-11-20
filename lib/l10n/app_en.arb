@@ -65,5 +65,20 @@
   "minutesShort": "{m} min",
   "hoursMinutesShort": "{h} h {m} min",
   "routeTo": "To {name}",
-  "tolls": "Tolls"
+  "tolls": "Tolls",
+  "navThen": "Then",
+  "navKmh": "km/h",
+  "navEnd": "End",
+  "navRemaining": "{time} · {dist}",
+  "navRerouting": "Rerouting…",
+  "navArrived": "You have arrived",
+  "navPreview": "Preview",
+  "navPreviewBadge": "Drive preview",
+  "navMute": "Mute",
+  "navUnmute": "Unmute",
+  "navOverview": "Route overview",
+  "navRecenter": "Back to my location",
+  "navStartSpeech": "Let's go.",
+  "navRerouteSpeech": "You left the route, recalculating",
+  "navCurrentStreet": "On {street}"
 }

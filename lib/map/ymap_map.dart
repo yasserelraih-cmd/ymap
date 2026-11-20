@@ -18,7 +18,11 @@ class YmapMap extends StatefulWidget {
     required this.isTablet,
     required this.onMessage,
     this.onRouteTapped,
+    this.navigating = false,
   });
+
+  /// أثناء الملاحة نخفي البوصلة (الشريط العلوي يغطي مكانها).
+  final bool navigating;
 
   final String languageCode;
   final bool dark;
@@ -126,10 +130,11 @@ class YmapMapState extends State<YmapMap> {
 
   /// يرسم المسارات: البدائل رمادية والمختار أزرق عريض بحافة بيضاء.
   Future<void> showRoutes(List<RouteResult> routes, int selected,
-      {required EdgeInsets padding}) async {
+      {EdgeInsets? padding}) async {
     _routes = routes;
     _selectedRoute = selected;
     await _drawRoutes();
+    if (padding == null) return; // أثناء الملاحة الكاميرا تتبعك
     final pts = routes[selected].points;
     if (pts.isEmpty) return;
     var minLat = pts.first.lat, maxLat = minLat;
@@ -155,6 +160,95 @@ class YmapMapState extends State<YmapMap> {
       padding: padding,
     );
     await _controller?.animateCamera(CameraUpdate.newCameraPosition(camera));
+    _puckFollow = false;
+  }
+
+  // ===== الملاحة: علامة سيارتك وكاميرا تتبعك =====
+  Circle? _puckHalo;
+  Circle? _puckDot;
+  LatLng? _puckAt;
+  bool _puckFollow = false;
+
+  /// يرسم موقعك أثناء الملاحة (دائرة زرقاء بحافة بيضاء وهالة).
+  Future<void> setPuck(double lat, double lon) async {
+    final c = _controller;
+    if (c == null) return;
+    _puckAt = LatLng(lat, lon);
+    if (_puckDot == null) {
+      _puckHalo = await c.addCircle(CircleOptions(
+        geometry: _puckAt,
+        circleRadius: 22,
+        circleColor: '#2F7DF6',
+        circleOpacity: 0.18,
+      ));
+      _puckDot = await c.addCircle(CircleOptions(
+        geometry: _puckAt,
+        circleRadius: 9,
+        circleColor: '#2F7DF6',
+        circleStrokeColor: '#FFFFFF',
+        circleStrokeWidth: 4,
+      ));
+    } else {
+      await c.updateCircle(_puckHalo!, CircleOptions(geometry: _puckAt));
+      await c.updateCircle(_puckDot!, CircleOptions(geometry: _puckAt));
+    }
+  }
+
+  Future<void> clearPuck() async {
+    final c = _controller;
+    final ids = [?_puckHalo, ?_puckDot];
+    _puckHalo = null;
+    _puckDot = null;
+    _puckAt = null;
+    if (c != null && ids.isNotEmpty) {
+      try {
+        await c.removeCircles(ids);
+      } catch (_) {}
+    }
+  }
+
+  /// كاميرا القيادة: سيارتك في الثلث السفلي، الخريطة تدور مع الطريق.
+  Future<void> followDriving({
+    required double lat,
+    required double lon,
+    required double bearing,
+    required double speedMps,
+    required bool threeD,
+  }) async {
+    if (!mounted) return;
+    _puckFollow = true;
+    final zoom = speedMps > 22 ? 15.6 : (speedMps > 12 ? 16.3 : 17.0);
+    final height = context.size?.height ?? 800;
+    // كم متر نتقدم للأمام حتى تظهر السيارة أسفل منتصف الشاشة.
+    final metersPerPx =
+        156543.03 * math.cos(lat * math.pi / 180) / math.pow(2, zoom) / 2;
+    final ahead = height * (threeD ? 0.16 : 0.22) * metersPerPx;
+    final target = _moveBy(lat, lon, bearing, ahead);
+    await _controller?.animateCamera(
+      CameraUpdate.newCameraPosition(CameraPosition(
+        target: target,
+        zoom: zoom,
+        tilt: threeD ? 60 : 0,
+        bearing: bearing,
+      )),
+      duration: const Duration(milliseconds: 600),
+    );
+  }
+
+  /// نظرة عامة على المسار كله أثناء الملاحة.
+  bool get followingPuck => _puckFollow;
+
+  static LatLng _moveBy(double lat, double lon, double bearingDeg, double meters) {
+    const r = 6371008.8;
+    final d = meters / r;
+    final b = bearingDeg * math.pi / 180;
+    final la = lat * math.pi / 180, lo = lon * math.pi / 180;
+    final la2 = math.asin(math.sin(la) * math.cos(d) +
+        math.cos(la) * math.sin(d) * math.cos(b));
+    final lo2 = lo +
+        math.atan2(math.sin(b) * math.sin(d) * math.cos(la),
+            math.cos(d) - math.sin(la) * math.sin(la2));
+    return LatLng(la2 * 180 / math.pi, lo2 * 180 / math.pi);
   }
 
   Future<void> clearRoutes() async {
@@ -371,6 +465,12 @@ class YmapMapState extends State<YmapMap> {
       onStyleLoadedCallback: () async {
         await _drawRoutes();
         await _drawPlaceMarker();
+        final puck = _puckAt;
+        if (puck != null) {
+          _puckHalo = null;
+          _puckDot = null;
+          await setPuck(puck.latitude, puck.longitude);
+        }
       },
       onUserLocationUpdated: (loc) => _user = loc.position,
       trackCameraPosition: true,
@@ -381,7 +481,7 @@ class YmapMapState extends State<YmapMap> {
           : MyLocationRenderMode.normal,
       onCameraTrackingDismissed: () =>
           setState(() => _tracking = MyLocationTrackingMode.none),
-      compassEnabled: true,
+      compassEnabled: !widget.navigating,
       compassViewPosition: compassPosition,
       compassViewMargins: compassMargins,
       logoEnabled: false,

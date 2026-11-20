@@ -15,6 +15,7 @@ class RouteCard extends StatelessWidget {
     required this.onSelect,
     required this.onClose,
     required this.onStart,
+    this.onPreview,
     this.loading = false,
     this.scrollController,
   });
@@ -25,6 +26,7 @@ class RouteCard extends StatelessWidget {
   final ValueChanged<int> onSelect;
   final VoidCallback onClose;
   final VoidCallback onStart;
+  final VoidCallback? onPreview;
   final bool loading;
   final ScrollController? scrollController;
 
@@ -148,21 +150,26 @@ class RouteCard extends StatelessWidget {
                     label: Text(t.startNav),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(t.arriveAt(formatArrival(context, routes[selected].duration)),
-                        style: text.titleSmall),
-                    Text(
-                      '${formatDuration(t, routes[selected].duration)} · '
-                      '${routes[selected].distanceKm.toStringAsFixed(1)} ${lang == 'ar' ? 'كم' : 'km'}',
-                      style: text.bodySmall,
+                if (onPreview != null) ...[
+                  const SizedBox(width: 8),
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(0, 52),
                     ),
-                  ],
-                ),
+                    onPressed: onPreview,
+                    icon: const Icon(Icons.play_circle_outline),
+                    label: Text(t.navPreview),
+                  ),
+                ],
               ],
             ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${t.arriveAt(formatArrival(context, routes[selected].duration))} · '
+            '${formatDuration(t, routes[selected].duration)} · '
+            '${routes[selected].distanceKm.toStringAsFixed(1)} ${lang == 'ar' ? 'كم' : 'km'}',
+            style: text.titleSmall,
           ),
           const SizedBox(height: 16),
           Text(t.routeSteps, style: text.titleSmall),

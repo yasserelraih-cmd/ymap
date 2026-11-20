@@ -117,5 +117,37 @@
       }
     }
   },
-  "tolls": "رسوم"
+  "tolls": "رسوم",
+  "navThen": "ثم",
+  "navKmh": "كم/س",
+  "navEnd": "إنهاء",
+  "navRemaining": "{time} · {dist}",
+  "@navRemaining": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      },
+      "dist": {
+        "type": "String"
+      }
+    }
+  },
+  "navRerouting": "جارٍ إعادة حساب المسار…",
+  "navArrived": "وصلت إلى وجهتك",
+  "navPreview": "معاينة",
+  "navPreviewBadge": "معاينة القيادة",
+  "navMute": "كتم الصوت",
+  "navUnmute": "تشغيل الصوت",
+  "navOverview": "عرض المسار كاملاً",
+  "navRecenter": "العودة لموقعي",
+  "navStartSpeech": "لنبدأ.",
+  "navRerouteSpeech": "خرجت عن المسار، جارٍ إعادة الحساب",
+  "navCurrentStreet": "على {street}",
+  "@navCurrentStreet": {
+    "placeholders": {
+      "street": {
+        "type": "String"
+      }
+    }
+  }
 }

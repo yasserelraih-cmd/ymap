@@ -1,7 +1,16 @@
+import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../l10n/app_localizations.dart';
 import '../map/ymap_map.dart';
+import '../navigation/navigation_engine.dart';
+import '../navigation/navigation_view.dart';
+import '../navigation/position_source.dart';
+import '../navigation/speaker.dart';
+import '../navigation/voice_guide.dart';
+import '../routing/instructions.dart';
 import '../routing/route.dart';
 import '../routing/routing_service.dart';
 import '../search/place.dart';
@@ -114,6 +123,175 @@ class _HomeScreenState extends State<HomeScreen> {
     await _mapKey.currentState?.showRoutes(routes, i, padding: _routePadding());
   }
 
+  // ===== الملاحة =====
+  final _speaker = Speaker();
+  NavigationEngine? _engine;
+  VoiceGuide? _voice;
+  PositionSource? _source;
+  StreamSubscription<NavFix>? _fixSub;
+  RouteResult? _navRoute;
+  NavState? _navState;
+  double _navSpeed = 0;
+  bool _navOverview = false;
+  bool _rerouting = false;
+  bool _nav3D = true;
+
+  bool get _navigating => _navRoute != null;
+
+  Future<void> _startNavigation({required bool simulate}) async {
+    final routes = _routes;
+    if (routes == null || routes.isEmpty || _place == null) return;
+    final t = AppLocalizations.of(context);
+    final lang = Localizations.localeOf(context).languageCode;
+    final route = routes[_selectedRoute];
+    // أول جملة تُقال داخل ضغطة الزر: المتصفح (خصوصاً Safari) يسمح بالصوت بعدها.
+    await _speaker.setLanguage(lang);
+    unawaited(_speaker.say(
+        '${t.navStartSpeech} ${Instructions.text(route.maneuvers.first, lang)}'));
+    try {
+      await WakelockPlus.enable(); // الشاشة لا تنطفئ أثناء القيادة
+    } catch (_) {}
+    if (!mounted) return;
+    setState(() {
+      _navRoute = route;
+      _navState = null;
+      _navSpeed = 0;
+      _navOverview = false;
+      _rerouting = false;
+    });
+    await _mapKey.currentState?.showRoutes([route], 0);
+    _track(route, simulate: simulate, lang: lang);
+  }
+
+  void _track(RouteResult route, {required bool simulate, required String lang}) {
+    _engine = NavigationEngine(route);
+    _voice = VoiceGuide(route, lang: lang);
+    _fixSub?.cancel();
+    _source?.dispose();
+    final source = simulate ? SimulatedPositionSource(route) : GpsPositionSource();
+    _source = source;
+    _fixSub = source.fixes.listen(_onFix);
+  }
+
+  Future<void> _onFix(NavFix fix) async {
+    final engine = _engine;
+    final route = _navRoute;
+    if (engine == null || route == null || !mounted) return;
+    final s = engine.update(fix);
+    final speed = fix.speedMps ?? _navSpeed;
+    setState(() {
+      _navState = s;
+      _navSpeed = speed;
+    });
+    final lat = s.offRoute ? fix.lat : s.snappedLat;
+    final lon = s.offRoute ? fix.lon : s.snappedLon;
+    final map = _mapKey.currentState;
+    await map?.setPuck(lat, lon);
+    if (!_navOverview) {
+      await map?.followDriving(
+        lat: lat,
+        lon: lon,
+        bearing: s.offRoute ? (fix.headingDeg ?? s.bearing) : s.bearing,
+        speedMps: speed,
+        threeD: _nav3D,
+      );
+    }
+    final say = _voice?.next(s, speedMps: speed);
+    if (say != null) unawaited(_speaker.say(say));
+    if (s.offRoute && !_rerouting && !(_source?.isSimulation ?? true)) {
+      unawaited(_reroute(fix));
+    }
+    if (s.arrived) {
+      unawaited(_fixSub?.cancel());
+      try {
+        await WakelockPlus.disable();
+      } catch (_) {}
+    }
+  }
+
+  Future<void> _reroute(NavFix fix) async {
+    final place = _place;
+    if (place == null) return;
+    final t = AppLocalizations.of(context);
+    final lang = Localizations.localeOf(context).languageCode;
+    setState(() => _rerouting = true);
+    unawaited(_speaker.say(t.navRerouteSpeech));
+    try {
+      final routes = await _routing.route(
+        fromLat: fix.lat,
+        fromLon: fix.lon,
+        toLat: place.lat,
+        toLon: place.lon,
+      );
+      if (!mounted || !_navigating) return;
+      final route = routes.first;
+      setState(() {
+        _routes = routes;
+        _selectedRoute = 0;
+        _navRoute = route;
+      });
+      _engine = NavigationEngine(route);
+      _voice = VoiceGuide(route, lang: lang);
+      await _mapKey.currentState?.showRoutes([route], 0);
+    } catch (_) {
+      // نحاول مرة أخرى مع القراءة التالية خارج المسار.
+    } finally {
+      if (mounted) setState(() => _rerouting = false);
+    }
+  }
+
+  Future<void> _toggleOverview() async {
+    final route = _navRoute;
+    if (route == null) return;
+    setState(() => _navOverview = !_navOverview);
+    final top = MediaQuery.paddingOf(context).top;
+    if (_navOverview) {
+      await _mapKey.currentState?.showRoutes([route], 0,
+          padding: EdgeInsets.fromLTRB(48, top + 150, 48, 130));
+    } else if (_navState != null) {
+      final s = _navState!;
+      await _mapKey.currentState?.followDriving(
+        lat: s.snappedLat,
+        lon: s.snappedLon,
+        bearing: s.bearing,
+        speedMps: _navSpeed,
+        threeD: _nav3D,
+      );
+    }
+  }
+
+  Future<void> _endNavigation() async {
+    await _fixSub?.cancel();
+    _fixSub = null;
+    _source?.dispose();
+    _source = null;
+    _engine = null;
+    _voice = null;
+    await _speaker.stop();
+    try {
+      await WakelockPlus.disable();
+    } catch (_) {}
+    if (!mounted) return;
+    setState(() {
+      _navRoute = null;
+      _navState = null;
+    });
+    final map = _mapKey.currentState;
+    await map?.clearPuck();
+    final routes = _routes;
+    if (routes != null && routes.isNotEmpty) {
+      await map?.showRoutes(routes, _selectedRoute, padding: _routePadding());
+    }
+  }
+
+  @override
+  void dispose() {
+    _fixSub?.cancel();
+    _source?.dispose();
+    _speaker.stop();
+    super.dispose();
+  }
+
   Future<void> _closeRoutes() async {
     setState(() {
       _routes = null;
@@ -160,7 +338,8 @@ class _HomeScreenState extends State<HomeScreen> {
         loading: _routeLoading,
         onSelect: _selectRoute,
         onClose: _closeRoutes,
-        onStart: () => _showMessage(AppLocalizations.of(context).startNavSoon),
+        onStart: () => _startNavigation(simulate: false),
+        onPreview: () => _startNavigation(simulate: true),
         scrollController: scrollController,
       );
     }
@@ -200,6 +379,7 @@ class _HomeScreenState extends State<HomeScreen> {
       isTablet: isTablet,
       onMessage: _showMessage,
       onRouteTapped: _selectRoute,
+      navigating: _navigating,
     );
   }
 
@@ -214,6 +394,29 @@ class _HomeScreenState extends State<HomeScreen> {
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isTablet = constraints.maxWidth >= HomeScreen.tabletBreakpoint;
+          final navRoute = _navRoute;
+          if (navRoute != null) {
+            return Stack(
+              children: [
+                Positioned.fill(child: _buildMap(context, isTablet)),
+                Positioned.fill(
+                  child: NavigationView(
+                    route: navRoute,
+                    state: _navState,
+                    speedMps: _navSpeed,
+                    muted: _speaker.muted,
+                    overview: _navOverview,
+                    simulation: _source?.isSimulation ?? false,
+                    rerouting: _rerouting,
+                    onToggleMute: () =>
+                        setState(() => _speaker.muted = !_speaker.muted),
+                    onToggleOverview: _toggleOverview,
+                    onEnd: _endNavigation,
+                  ),
+                ),
+              ],
+            );
+          }
           return Stack(
             children: [
               Positioned.fill(child: _buildMap(context, isTablet)),
