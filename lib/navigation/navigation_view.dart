@@ -41,7 +41,11 @@ class NavigationView extends StatelessWidget {
     this.onReport,
     this.onShare,
     this.onVoice,
+    this.onParking,
   });
+
+  /// «مواقف قريبة» عند الاقتراب من الوجهة.
+  final VoidCallback? onParking;
 
   /// مشاركة الرحلة ووقت الوصول.
   final VoidCallback? onShare;
@@ -94,6 +98,18 @@ class NavigationView extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsetsDirectional.only(top: 8, start: 4),
                   child: _AlertChip(type: upcomingAlert!, meters: upcomingAlertM!),
+                ),
+              if (onParking != null &&
+                  s != null &&
+                  !s.arrived &&
+                  s.remainingM < 800)
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(top: 8, start: 4),
+                  child: ActionChip(
+                    avatar: const Icon(Icons.local_parking, size: 18),
+                    label: Text(t.nearbyParking),
+                    onPressed: onParking,
+                  ),
                 ),
               if (simulation)
                 Padding(

@@ -68,7 +68,9 @@ class MetroStations {
   /// هل يسأل عن المترو عموماً («مترو»، «أقرب محطة مترو»)؟
   static bool isGenericQuery(String q) {
     final n = normalizeArabic(q).replaceAll(RegExp(r'(اقرب|قريب|nearest)'), '').trim();
-    return _metroWords.hasMatch(n) && n.replaceAll(_metroWords, '').trim().isEmpty;
+    // «محطة» وحدها تعني بنزينة غالباً؛ نشترط ذكر المترو.
+    if (!RegExp(r'(مترو|metro|subway)', caseSensitive: false).hasMatch(n)) return false;
+    return n.replaceAll(_metroWords, '').trim().isEmpty;
   }
 
   /// يبحث بالاسم أو يرجع الأقرب إن كان السؤال عاماً عن المترو.

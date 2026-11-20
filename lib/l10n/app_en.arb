@@ -162,5 +162,9 @@
   "dialectStandard": "Standard",
   "testVoice": "Test voice",
   "metro": "Riyadh Metro",
-  "metroShown": "Riyadh Metro lines and stations (OpenStreetMap data)"
+  "metroShown": "Riyadh Metro lines and stations (OpenStreetMap data)",
+  "catParking": "Parking",
+  "nearbyParking": "Nearby parking",
+  "noParking": "No mapped parking near your destination",
+  "parkingFound": "Guiding you to parking: {name}"
 }

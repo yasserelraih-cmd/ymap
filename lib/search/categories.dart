@@ -7,7 +7,8 @@ enum PlaceCategory {
   mosque(Icons.mosque, 'مسجد', 'amenity:place_of_worship'),
   pharmacy(Icons.local_pharmacy, 'صيدلية', 'amenity:pharmacy'),
   hospital(Icons.local_hospital, 'مستشفى', 'amenity:hospital'),
-  bank(Icons.account_balance, 'بنك', 'amenity:bank');
+  bank(Icons.account_balance, 'بنك', 'amenity:bank'),
+  parking(Icons.local_parking, 'موقف', 'amenity:parking');
 
   const PlaceCategory(this.icon, this.query, this.osmTag);
 
@@ -30,6 +31,7 @@ enum PlaceCategory {
     PlaceCategory.pharmacy: ['صيدليه', 'صيدليات', 'pharmacy'],
     PlaceCategory.hospital: ['مستشفي', 'مستشفيات', 'طوارئ', 'hospital'],
     PlaceCategory.bank: ['بنك', 'بنوك', 'مصرف', 'bank'],
+    PlaceCategory.parking: ['موقف', 'مواقف', 'موقف سيارات', 'مواقف سيارات', 'باركنج', 'parking'],
   };
 
   /// إذا كان النص اسماً عاماً لتصنيف (مثل «بنزين») يرجع التصنيف.

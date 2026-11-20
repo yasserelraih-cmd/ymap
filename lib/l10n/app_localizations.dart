@@ -1075,6 +1075,30 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'خطوط مترو الرياض ومحطاته (بيانات OpenStreetMap)'**
   String get metroShown;
+
+  /// No description provided for @catParking.
+  ///
+  /// In ar, this message translates to:
+  /// **'مواقف'**
+  String get catParking;
+
+  /// No description provided for @nearbyParking.
+  ///
+  /// In ar, this message translates to:
+  /// **'مواقف قريبة'**
+  String get nearbyParking;
+
+  /// No description provided for @noParking.
+  ///
+  /// In ar, this message translates to:
+  /// **'ما لقينا مواقف مسجلة قرب وجهتك'**
+  String get noParking;
+
+  /// No description provided for @parkingFound.
+  ///
+  /// In ar, this message translates to:
+  /// **'نوجهك إلى موقف: {name}'**
+  String parkingFound(String name);
 }
 
 class _AppLocalizationsDelegate

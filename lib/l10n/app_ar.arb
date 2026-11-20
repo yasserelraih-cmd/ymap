@@ -295,5 +295,16 @@
   "dialectStandard": "فصحى",
   "testVoice": "جرّب الصوت",
   "metro": "مترو الرياض",
-  "metroShown": "خطوط مترو الرياض ومحطاته (بيانات OpenStreetMap)"
+  "metroShown": "خطوط مترو الرياض ومحطاته (بيانات OpenStreetMap)",
+  "catParking": "مواقف",
+  "nearbyParking": "مواقف قريبة",
+  "noParking": "ما لقينا مواقف مسجلة قرب وجهتك",
+  "parkingFound": "نوجهك إلى موقف: {name}",
+  "@parkingFound": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  }
 }

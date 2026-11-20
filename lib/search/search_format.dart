@@ -12,6 +12,7 @@ String categoryLabel(AppLocalizations t, PlaceCategory c) => switch (c) {
       PlaceCategory.pharmacy => t.catPharmacy,
       PlaceCategory.hospital => t.catHospital,
       PlaceCategory.bank => t.catBank,
+      PlaceCategory.parking => t.catParking,
     };
 
 /// «350 م» أو «2.4 كم».

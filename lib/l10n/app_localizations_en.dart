@@ -542,4 +542,18 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get metroShown =>
       'Riyadh Metro lines and stations (OpenStreetMap data)';
+
+  @override
+  String get catParking => 'Parking';
+
+  @override
+  String get nearbyParking => 'Nearby parking';
+
+  @override
+  String get noParking => 'No mapped parking near your destination';
+
+  @override
+  String parkingFound(String name) {
+    return 'Guiding you to parking: $name';
+  }
 }

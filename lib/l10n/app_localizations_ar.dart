@@ -540,4 +540,18 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get metroShown => 'خطوط مترو الرياض ومحطاته (بيانات OpenStreetMap)';
+
+  @override
+  String get catParking => 'مواقف';
+
+  @override
+  String get nearbyParking => 'مواقف قريبة';
+
+  @override
+  String get noParking => 'ما لقينا مواقف مسجلة قرب وجهتك';
+
+  @override
+  String parkingFound(String name) {
+    return 'نوجهك إلى موقف: $name';
+  }
 }

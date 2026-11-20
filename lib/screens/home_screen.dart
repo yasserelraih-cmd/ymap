@@ -608,6 +608,30 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  /// قرب الوجهة: نوجهك لأقرب موقف سيارات لها.
+  Future<void> _parkingNearDestination() async {
+    final dest = _place;
+    if (dest == null) return;
+    final t = AppLocalizations.of(context);
+    try {
+      final list = await _search.nearby(PlaceCategory.parking,
+          nearLat: dest.lat, nearLon: dest.lon);
+      if (!mounted) return;
+      if (list.isEmpty) {
+        _showMessage(t.noParking);
+        return;
+      }
+      final p = list.first;
+      await _endNavigation();
+      if (!mounted) return;
+      await _selectPlace(p);
+      _showMessage(t.parkingFound(p.name));
+      await _goNow();
+    } catch (_) {
+      if (mounted) _showMessage(t.searchError);
+    }
+  }
+
   Future<void> _cycleNavView() async {
     setState(() => _navView =
         NavViewMode.values[(_navView.index + 1) % NavViewMode.values.length]);
@@ -919,6 +943,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     onCycleView: _cycleNavView,
                     onReport: _mode == TravelMode.drive ? _report : null,
                     onShare: _shareTrip,
+                    onParking: _mode == TravelMode.drive ? _parkingNearDestination : null,
                     onVoice: _voiceCommand,
                     speedLimitKmh: _limitNow,
                     upcomingAlert: _upcoming?.alert.type,
