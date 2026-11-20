@@ -421,6 +421,78 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'تعذّر فتح التطبيق.'**
   String get cantOpen;
+
+  /// No description provided for @calculatingRoute.
+  ///
+  /// In ar, this message translates to:
+  /// **'جارٍ حساب المسار…'**
+  String get calculatingRoute;
+
+  /// No description provided for @routeError.
+  ///
+  /// In ar, this message translates to:
+  /// **'تعذّر حساب المسار. تأكد من الاتصال وحاول مرة أخرى.'**
+  String get routeError;
+
+  /// No description provided for @needLocation.
+  ///
+  /// In ar, this message translates to:
+  /// **'نحتاج موقعك لحساب المسار. فعّل الموقع وحاول مرة أخرى.'**
+  String get needLocation;
+
+  /// No description provided for @fastest.
+  ///
+  /// In ar, this message translates to:
+  /// **'الأسرع'**
+  String get fastest;
+
+  /// No description provided for @arriveAt.
+  ///
+  /// In ar, this message translates to:
+  /// **'الوصول {time}'**
+  String arriveAt(String time);
+
+  /// No description provided for @startNav.
+  ///
+  /// In ar, this message translates to:
+  /// **'ابدأ'**
+  String get startNav;
+
+  /// No description provided for @startNavSoon.
+  ///
+  /// In ar, this message translates to:
+  /// **'الملاحة الصوتية خطوة بخطوة تأتي في الخطوة 1.4'**
+  String get startNavSoon;
+
+  /// No description provided for @routeSteps.
+  ///
+  /// In ar, this message translates to:
+  /// **'خطوات المسار'**
+  String get routeSteps;
+
+  /// No description provided for @minutesShort.
+  ///
+  /// In ar, this message translates to:
+  /// **'{m} د'**
+  String minutesShort(String m);
+
+  /// No description provided for @hoursMinutesShort.
+  ///
+  /// In ar, this message translates to:
+  /// **'{h} س {m} د'**
+  String hoursMinutesShort(String h, String m);
+
+  /// No description provided for @routeTo.
+  ///
+  /// In ar, this message translates to:
+  /// **'إلى {name}'**
+  String routeTo(String name);
+
+  /// No description provided for @tolls.
+  ///
+  /// In ar, this message translates to:
+  /// **'رسوم'**
+  String get tolls;
 }
 
 class _AppLocalizationsDelegate

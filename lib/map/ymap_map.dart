@@ -1,9 +1,11 @@
+import 'dart:math' as math;
 import 'dart:math' show Point;
 
 import 'package:maplibre_gl/maplibre_gl.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../l10n/app_localizations.dart';
+import '../routing/route.dart';
 import 'location_service.dart';
 import 'map_style.dart';
 
@@ -15,6 +17,7 @@ class YmapMap extends StatefulWidget {
     required this.dark,
     required this.isTablet,
     required this.onMessage,
+    this.onRouteTapped,
   });
 
   final String languageCode;
@@ -22,11 +25,51 @@ class YmapMap extends StatefulWidget {
   final bool isTablet;
   final void Function(String message) onMessage;
 
+  /// عند الضغط على مسار بديل في الخريطة (يرجع رقمه).
+  final void Function(int index)? onRouteTapped;
+
   /// وسط الرياض.
   static const riyadh = LatLng(24.7136, 46.6753);
 
   @override
   State<YmapMap> createState() => YmapMapState();
+}
+
+/// كاميرا تُظهر المستطيل كاملاً داخل المساحة الظاهرة (بعد طرح البطاقات).
+/// حسابات Web Mercator بمربعات 512 بكسل كما في MapLibre.
+CameraPosition fitBounds({
+  required double minLat,
+  required double minLon,
+  required double maxLat,
+  required double maxLon,
+  required double width,
+  required double height,
+  required EdgeInsets padding,
+}) {
+  double mercY(double lat) {
+    final s = math.sin(lat * math.pi / 180).clamp(-0.9999, 0.9999);
+    return 0.5 - math.log((1 + s) / (1 - s)) / (4 * math.pi);
+  }
+
+  final availW = math.max(width - padding.left - padding.right, 64.0);
+  final availH = math.max(height - padding.top - padding.bottom, 64.0);
+  final dx = math.max((maxLon - minLon) / 360, 1e-9);
+  final dy = math.max((mercY(minLat) - mercY(maxLat)).abs(), 1e-9);
+  final zoom = math
+      .min(math.log(availW / (512 * dx)) / math.ln2,
+          math.log(availH / (512 * dy)) / math.ln2)
+      .clamp(3.0, 17.0);
+
+  // مركز المستطيل بالبكسل، ثم نزيحه بنصف فرق الهوامش.
+  final scale = 512 * math.pow(2, zoom);
+  final cx = ((minLon + maxLon) / 2 + 180) / 360 * scale;
+  final cy = (mercY(minLat) + mercY(maxLat)) / 2 * scale;
+  final px = cx - (padding.left - padding.right) / 2;
+  final py = cy + (padding.bottom - padding.top) / 2;
+  final lon = px / scale * 360 - 180;
+  final n = math.pi - 2 * math.pi * py / scale;
+  final lat = 180 / math.pi * math.atan(0.5 * (math.exp(n) - math.exp(-n)));
+  return CameraPosition(target: LatLng(lat, lon), zoom: zoom.toDouble());
 }
 
 class YmapMapState extends State<YmapMap> {
@@ -64,6 +107,102 @@ class YmapMapState extends State<YmapMap> {
         tilt: _is3D ? 60 : 0,
       )),
     );
+  }
+
+  // ===== المسارات =====
+  List<RouteResult> _routes = const [];
+  int _selectedRoute = 0;
+  final _routeLines = <Line, int>{}; // الخط ← رقم المسار
+
+  /// تحديد موقعك (يطلب الإذن عند الحاجة). يرجع null إن لم يتوفر.
+  Future<LatLng?> locateUser() async {
+    final status = await _location.ensurePermission();
+    if (status != LocationStatus.granted) return null;
+    if (mounted && !_locationOn) setState(() => _locationOn = true);
+    final pos = await _location.current();
+    if (pos != null) _user = LatLng(pos.latitude, pos.longitude);
+    return _user;
+  }
+
+  /// يرسم المسارات: البدائل رمادية والمختار أزرق عريض بحافة بيضاء.
+  Future<void> showRoutes(List<RouteResult> routes, int selected,
+      {required EdgeInsets padding}) async {
+    _routes = routes;
+    _selectedRoute = selected;
+    await _drawRoutes();
+    final pts = routes[selected].points;
+    if (pts.isEmpty) return;
+    var minLat = pts.first.lat, maxLat = minLat;
+    var minLon = pts.first.lon, maxLon = minLon;
+    for (final p in pts) {
+      if (p.lat < minLat) minLat = p.lat;
+      if (p.lat > maxLat) maxLat = p.lat;
+      if (p.lon < minLon) minLon = p.lon;
+      if (p.lon > maxLon) maxLon = p.lon;
+    }
+    _tracking = MyLocationTrackingMode.none;
+    await _controller?.updateMyLocationTrackingMode(MyLocationTrackingMode.none);
+    // نحسب الإطار بأنفسنا: newLatLngBounds في نسخة الويب يقفز لمكان خاطئ.
+    if (!mounted) return;
+    final size = context.size ?? MediaQuery.sizeOf(context);
+    final camera = fitBounds(
+      minLat: minLat,
+      minLon: minLon,
+      maxLat: maxLat,
+      maxLon: maxLon,
+      width: size.width,
+      height: size.height,
+      padding: padding,
+    );
+    await _controller?.animateCamera(CameraUpdate.newCameraPosition(camera));
+  }
+
+  Future<void> clearRoutes() async {
+    _routes = const [];
+    await _drawRoutes();
+  }
+
+  Future<void> _drawRoutes() async {
+    final c = _controller;
+    if (c == null) return;
+    final old = _routeLines.keys.toList();
+    _routeLines.clear();
+    if (old.isNotEmpty) {
+      try {
+        await c.removeLines(old);
+      } catch (_) {}
+    }
+    if (_routes.isEmpty) return;
+    final order = [
+      for (var i = 0; i < _routes.length; i++)
+        if (i != _selectedRoute) i,
+      _selectedRoute,
+    ];
+    for (final i in order) {
+      final geometry = [for (final p in _routes[i].points) LatLng(p.lat, p.lon)];
+      final main = i == _selectedRoute;
+      final casing = await c.addLine(LineOptions(
+        geometry: geometry,
+        lineColor: '#FFFFFF',
+        lineWidth: main ? 12 : 9,
+        lineJoin: 'round',
+      ));
+      final line = await c.addLine(LineOptions(
+        geometry: geometry,
+        lineColor: main ? '#2F7DF6' : '#97A6BA',
+        lineWidth: main ? 8 : 6,
+        lineJoin: 'round',
+      ));
+      _routeLines[casing] = i;
+      _routeLines[line] = i;
+    }
+    // علامة الوجهة فوق المسار.
+    await _drawPlaceMarker();
+  }
+
+  void _onLineTapped(Line line) {
+    final i = _routeLines[line];
+    if (i != null && i != _selectedRoute) widget.onRouteTapped?.call(i);
   }
 
   Future<void> clearPlace() async {
@@ -224,9 +363,15 @@ class YmapMapState extends State<YmapMap> {
       styleString: style,
       initialCameraPosition:
           const CameraPosition(target: YmapMap.riyadh, zoom: 11),
-      onMapCreated: (c) => _controller = c,
-      // تغيير التصميم (ليلي/لغة) يمسح العلامات، فنعيد رسمها.
-      onStyleLoadedCallback: _drawPlaceMarker,
+      onMapCreated: (c) {
+        _controller = c;
+        c.onLineTapped.add(_onLineTapped);
+      },
+      // تغيير التصميم (ليلي/لغة) يمسح العلامات والمسارات، فنعيد رسمها.
+      onStyleLoadedCallback: () async {
+        await _drawRoutes();
+        await _drawPlaceMarker();
+      },
       onUserLocationUpdated: (loc) => _user = loc.position,
       trackCameraPosition: true,
       myLocationEnabled: _locationOn,

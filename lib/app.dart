@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'l10n/app_localizations.dart';
 import 'screens/home_screen.dart';
+import 'routing/routing_service.dart';
 import 'search/search_service.dart';
 import 'state/settings_controller.dart';
 import 'theme/ymap_theme.dart';
@@ -12,11 +13,13 @@ class YmapApp extends StatelessWidget {
     required this.settings,
     this.mapBuilder,
     this.searchService,
+    this.routingService,
   });
 
   final SettingsController settings;
   final MapBuilder? mapBuilder;
   final SearchService? searchService;
+  final RoutingService? routingService;
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +48,7 @@ class YmapApp extends StatelessWidget {
           settings: settings,
           mapBuilder: mapBuilder,
           searchService: searchService,
+          routingService: routingService,
         ),
       ),
     );

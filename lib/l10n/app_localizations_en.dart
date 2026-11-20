@@ -180,4 +180,50 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cantOpen => 'Couldn\'t open the app.';
+
+  @override
+  String get calculatingRoute => 'Calculating route…';
+
+  @override
+  String get routeError =>
+      'Couldn\'t calculate the route. Check your connection and try again.';
+
+  @override
+  String get needLocation =>
+      'We need your location to calculate the route. Turn it on and try again.';
+
+  @override
+  String get fastest => 'Fastest';
+
+  @override
+  String arriveAt(String time) {
+    return 'Arrive $time';
+  }
+
+  @override
+  String get startNav => 'Start';
+
+  @override
+  String get startNavSoon => 'Turn-by-turn voice navigation comes in step 1.4';
+
+  @override
+  String get routeSteps => 'Route steps';
+
+  @override
+  String minutesShort(String m) {
+    return '$m min';
+  }
+
+  @override
+  String hoursMinutesShort(String h, String m) {
+    return '$h h $m min';
+  }
+
+  @override
+  String routeTo(String name) {
+    return 'To $name';
+  }
+
+  @override
+  String get tolls => 'Tolls';
 }

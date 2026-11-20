@@ -53,5 +53,17 @@
   "paste": "Paste",
   "openGoogleMaps": "Google Maps",
   "openWaze": "Waze",
-  "cantOpen": "Couldn't open the app."
+  "cantOpen": "Couldn't open the app.",
+  "calculatingRoute": "Calculating route…",
+  "routeError": "Couldn't calculate the route. Check your connection and try again.",
+  "needLocation": "We need your location to calculate the route. Turn it on and try again.",
+  "fastest": "Fastest",
+  "arriveAt": "Arrive {time}",
+  "startNav": "Start",
+  "startNavSoon": "Turn-by-turn voice navigation comes in step 1.4",
+  "routeSteps": "Route steps",
+  "minutesShort": "{m} min",
+  "hoursMinutesShort": "{h} h {m} min",
+  "routeTo": "To {name}",
+  "tolls": "Tolls"
 }

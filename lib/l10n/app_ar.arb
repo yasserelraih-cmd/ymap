@@ -74,5 +74,48 @@
   "paste": "لصق",
   "openGoogleMaps": "Google Maps",
   "openWaze": "Waze",
-  "cantOpen": "تعذّر فتح التطبيق."
+  "cantOpen": "تعذّر فتح التطبيق.",
+  "calculatingRoute": "جارٍ حساب المسار…",
+  "routeError": "تعذّر حساب المسار. تأكد من الاتصال وحاول مرة أخرى.",
+  "needLocation": "نحتاج موقعك لحساب المسار. فعّل الموقع وحاول مرة أخرى.",
+  "fastest": "الأسرع",
+  "arriveAt": "الوصول {time}",
+  "@arriveAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "startNav": "ابدأ",
+  "startNavSoon": "الملاحة الصوتية خطوة بخطوة تأتي في الخطوة 1.4",
+  "routeSteps": "خطوات المسار",
+  "minutesShort": "{m} د",
+  "@minutesShort": {
+    "placeholders": {
+      "m": {
+        "type": "String"
+      }
+    }
+  },
+  "hoursMinutesShort": "{h} س {m} د",
+  "@hoursMinutesShort": {
+    "placeholders": {
+      "h": {
+        "type": "String"
+      },
+      "m": {
+        "type": "String"
+      }
+    }
+  },
+  "routeTo": "إلى {name}",
+  "@routeTo": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "tolls": "رسوم"
 }

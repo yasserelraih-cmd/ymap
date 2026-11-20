@@ -179,4 +179,49 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get cantOpen => 'تعذّر فتح التطبيق.';
+
+  @override
+  String get calculatingRoute => 'جارٍ حساب المسار…';
+
+  @override
+  String get routeError => 'تعذّر حساب المسار. تأكد من الاتصال وحاول مرة أخرى.';
+
+  @override
+  String get needLocation =>
+      'نحتاج موقعك لحساب المسار. فعّل الموقع وحاول مرة أخرى.';
+
+  @override
+  String get fastest => 'الأسرع';
+
+  @override
+  String arriveAt(String time) {
+    return 'الوصول $time';
+  }
+
+  @override
+  String get startNav => 'ابدأ';
+
+  @override
+  String get startNavSoon => 'الملاحة الصوتية خطوة بخطوة تأتي في الخطوة 1.4';
+
+  @override
+  String get routeSteps => 'خطوات المسار';
+
+  @override
+  String minutesShort(String m) {
+    return '$m د';
+  }
+
+  @override
+  String hoursMinutesShort(String h, String m) {
+    return '$h س $m د';
+  }
+
+  @override
+  String routeTo(String name) {
+    return 'إلى $name';
+  }
+
+  @override
+  String get tolls => 'رسوم';
 }

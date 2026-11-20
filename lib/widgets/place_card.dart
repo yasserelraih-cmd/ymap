@@ -15,6 +15,7 @@ class PlaceCard extends StatelessWidget {
     required this.place,
     required this.onClose,
     required this.onMessage,
+    required this.onDirections,
     this.fromLat,
     this.fromLon,
     this.scrollController,
@@ -23,6 +24,7 @@ class PlaceCard extends StatelessWidget {
   final Place place;
   final VoidCallback onClose;
   final void Function(String) onMessage;
+  final VoidCallback onDirections;
   final double? fromLat;
   final double? fromLon;
   final ScrollController? scrollController;
@@ -78,7 +80,7 @@ class PlaceCard extends StatelessWidget {
             children: [
               Expanded(
                 child: FilledButton.icon(
-                  onPressed: () => onMessage(t.directionsSoon),
+                  onPressed: onDirections,
                   icon: const Icon(Icons.directions),
                   label: Text(t.directions),
                 ),
