@@ -14,6 +14,9 @@ class NavColors {
 }
 
 /// واجهة القيادة فوق الخريطة: الشريط العلوي، فقاعة السرعة، الأزرار، البطاقة السفلية.
+/// طريقة عرض الخريطة أثناء الملاحة.
+enum NavViewMode { threeD, headingUp, northUp }
+
 class NavigationView extends StatelessWidget {
   const NavigationView({
     super.key,
@@ -27,7 +30,16 @@ class NavigationView extends StatelessWidget {
     required this.onToggleMute,
     required this.onToggleOverview,
     required this.onEnd,
+    this.viewMode = NavViewMode.threeD,
+    this.onCycleView,
+    this.onReport,
   });
+
+  final NavViewMode viewMode;
+  final VoidCallback? onCycleView;
+
+  /// زر الإبلاغ (كاميرا/حادث/زحام) — يُفعّل في الخطوة 1.7.
+  final VoidCallback? onReport;
 
   final RouteResult route;
   final NavState? state;
@@ -83,6 +95,30 @@ class NavigationView extends StatelessWidget {
                 icon: overview ? Icons.navigation : Icons.alt_route,
                 onTap: onToggleOverview,
               ),
+              if (onCycleView != null) ...[
+                const SizedBox(height: 10),
+                _RoundButton(
+                  tooltip: switch (viewMode) {
+                    NavViewMode.threeD => t.navView3D,
+                    NavViewMode.headingUp => t.navViewHeading,
+                    NavViewMode.northUp => t.navViewNorth,
+                  },
+                  icon: switch (viewMode) {
+                    NavViewMode.threeD => Icons.view_in_ar,
+                    NavViewMode.headingUp => Icons.explore,
+                    NavViewMode.northUp => Icons.north,
+                  },
+                  onTap: onCycleView!,
+                ),
+              ],
+              if (onReport != null) ...[
+                const SizedBox(height: 10),
+                _RoundButton(
+                  tooltip: t.report,
+                  icon: Icons.campaign,
+                  onTap: onReport!,
+                ),
+              ],
             ],
           ),
         ),

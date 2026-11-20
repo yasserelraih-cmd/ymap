@@ -5,6 +5,15 @@ import 'package:http/http.dart' as http;
 import 'route.dart';
 
 /// واجهة حساب المسار (لتسهيل الاختبار واستبدال الخادم لاحقاً بخادم YMAP).
+/// طريقة التنقل.
+enum TravelMode {
+  drive('auto'),
+  walk('pedestrian');
+
+  const TravelMode(this.costing);
+  final String costing;
+}
+
 abstract class RoutingService {
   /// يرجع المسار الأفضل أولاً ثم البدائل (حتى مسارين إضافيين).
   Future<List<RouteResult>> route({
@@ -12,6 +21,7 @@ abstract class RoutingService {
     required double fromLon,
     required double toLat,
     required double toLon,
+    TravelMode mode = TravelMode.drive,
   });
 }
 
@@ -29,13 +39,14 @@ class ValhallaRoutingService implements RoutingService {
     required double fromLon,
     required double toLat,
     required double toLon,
+    TravelMode mode = TravelMode.drive,
   }) async {
     final request = {
       'locations': [
         {'lat': fromLat, 'lon': fromLon},
         {'lat': toLat, 'lon': toLon},
       ],
-      'costing': 'auto',
+      'costing': mode.costing,
       'alternates': 2,
       'units': 'kilometers',
       'directions_options': {'units': 'kilometers'},

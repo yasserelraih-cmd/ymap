@@ -174,5 +174,11 @@
   "delete": "حذف",
   "goToCar": "اذهب لسيارتي",
   "favorites": "المفضلة",
-  "more": "المزيد"
+  "more": "المزيد",
+  "modeDrive": "سيارة",
+  "modeWalk": "مشي",
+  "navView3D": "عرض ثلاثي الأبعاد",
+  "navViewHeading": "عرض باتجاه السير",
+  "navViewNorth": "الشمال للأعلى",
+  "report": "إبلاغ"
 }

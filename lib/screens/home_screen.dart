@@ -103,6 +103,7 @@ class _HomeScreenState extends State<HomeScreen> {
         fromLon: from.longitude,
         toLat: place.lat,
         toLon: place.lon,
+        mode: _mode,
       );
       if (!mounted || _routes == null) return;
       setState(() {
@@ -136,7 +137,8 @@ class _HomeScreenState extends State<HomeScreen> {
   double _navSpeed = 0;
   bool _navOverview = false;
   bool _rerouting = false;
-  bool _nav3D = true;
+  NavViewMode _navView = NavViewMode.threeD;
+  TravelMode _mode = TravelMode.drive;
 
   bool get _navigating => _navRoute != null;
 
@@ -195,7 +197,8 @@ class _HomeScreenState extends State<HomeScreen> {
         lon: lon,
         bearing: s.offRoute ? (fix.headingDeg ?? s.bearing) : s.bearing,
         speedMps: speed,
-        threeD: _nav3D,
+        threeD: _navView == NavViewMode.threeD,
+        northUp: _navView == NavViewMode.northUp,
       );
     }
     final say = _voice?.next(s, speedMps: speed);
@@ -228,6 +231,7 @@ class _HomeScreenState extends State<HomeScreen> {
         fromLon: fix.lon,
         toLat: place.lat,
         toLon: place.lon,
+        mode: _mode,
       );
       if (!mounted || !_navigating) return;
       final route = routes.first;
@@ -246,6 +250,21 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _cycleNavView() async {
+    setState(() => _navView =
+        NavViewMode.values[(_navView.index + 1) % NavViewMode.values.length]);
+    final s = _navState;
+    if (s == null || _navOverview) return;
+    await _mapKey.currentState?.followDriving(
+      lat: s.snappedLat,
+      lon: s.snappedLon,
+      bearing: s.bearing,
+      speedMps: _navSpeed,
+      threeD: _navView == NavViewMode.threeD,
+      northUp: _navView == NavViewMode.northUp,
+    );
+  }
+
   Future<void> _toggleOverview() async {
     final route = _navRoute;
     if (route == null) return;
@@ -261,7 +280,8 @@ class _HomeScreenState extends State<HomeScreen> {
         lon: s.snappedLon,
         bearing: s.bearing,
         speedMps: _navSpeed,
-        threeD: _nav3D,
+        threeD: _navView == NavViewMode.threeD,
+        northUp: _navView == NavViewMode.northUp,
       );
     }
   }
@@ -404,6 +424,12 @@ class _HomeScreenState extends State<HomeScreen> {
         onClose: _closeRoutes,
         onStart: () => _startNavigation(simulate: false),
         onPreview: () => _startNavigation(simulate: true),
+        mode: _mode,
+        onModeChanged: (m) {
+          if (m == _mode) return;
+          setState(() => _mode = m);
+          _startRouting();
+        },
         scrollController: scrollController,
       );
     }
@@ -508,6 +534,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         setState(() => _speaker.muted = !_speaker.muted),
                     onToggleOverview: _toggleOverview,
                     onEnd: _endNavigation,
+                    viewMode: _navView,
+                    onCycleView: _cycleNavView,
                   ),
                 ),
               ],

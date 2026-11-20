@@ -214,6 +214,7 @@ class YmapMapState extends State<YmapMap> {
     required double bearing,
     required double speedMps,
     required bool threeD,
+    bool northUp = false,
   }) async {
     if (!mounted) return;
     _puckFollow = true;
@@ -222,14 +223,14 @@ class YmapMapState extends State<YmapMap> {
     // كم متر نتقدم للأمام حتى تظهر السيارة أسفل منتصف الشاشة.
     final metersPerPx =
         156543.03 * math.cos(lat * math.pi / 180) / math.pow(2, zoom) / 2;
-    final ahead = height * (threeD ? 0.16 : 0.22) * metersPerPx;
+    final ahead = northUp ? 0.0 : height * (threeD ? 0.16 : 0.22) * metersPerPx;
     final target = _moveBy(lat, lon, bearing, ahead);
     await _controller?.animateCamera(
       CameraUpdate.newCameraPosition(CameraPosition(
         target: target,
         zoom: zoom,
-        tilt: threeD ? 60 : 0,
-        bearing: bearing,
+        tilt: threeD && !northUp ? 60 : 0,
+        bearing: northUp ? 0 : bearing,
       )),
       duration: const Duration(milliseconds: 600),
     );

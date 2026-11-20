@@ -691,6 +691,42 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'المزيد'**
   String get more;
+
+  /// No description provided for @modeDrive.
+  ///
+  /// In ar, this message translates to:
+  /// **'سيارة'**
+  String get modeDrive;
+
+  /// No description provided for @modeWalk.
+  ///
+  /// In ar, this message translates to:
+  /// **'مشي'**
+  String get modeWalk;
+
+  /// No description provided for @navView3D.
+  ///
+  /// In ar, this message translates to:
+  /// **'عرض ثلاثي الأبعاد'**
+  String get navView3D;
+
+  /// No description provided for @navViewHeading.
+  ///
+  /// In ar, this message translates to:
+  /// **'عرض باتجاه السير'**
+  String get navViewHeading;
+
+  /// No description provided for @navViewNorth.
+  ///
+  /// In ar, this message translates to:
+  /// **'الشمال للأعلى'**
+  String get navViewNorth;
+
+  /// No description provided for @report.
+  ///
+  /// In ar, this message translates to:
+  /// **'إبلاغ'**
+  String get report;
 }
 
 class _AppLocalizationsDelegate

@@ -98,5 +98,11 @@
   "delete": "Delete",
   "goToCar": "Go to my car",
   "favorites": "Favorites",
-  "more": "More"
+  "more": "More",
+  "modeDrive": "Drive",
+  "modeWalk": "Walk",
+  "navView3D": "3D view",
+  "navViewHeading": "Heading up",
+  "navViewNorth": "North up",
+  "report": "Report"
 }

@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import '../l10n/app_localizations.dart';
 import '../routing/instructions.dart';
 import '../routing/route.dart';
+import '../routing/routing_service.dart';
 import '../search/place.dart';
 
 /// بطاقة المسارات: الخيارات (الأسرع أولاً) + خطوات المسار + زر «ابدأ».
@@ -18,7 +19,12 @@ class RouteCard extends StatelessWidget {
     this.onPreview,
     this.loading = false,
     this.scrollController,
+    this.mode = TravelMode.drive,
+    this.onModeChanged,
   });
+
+  final TravelMode mode;
+  final ValueChanged<TravelMode>? onModeChanged;
 
   final Place destination;
   final List<RouteResult> routes;
@@ -69,6 +75,25 @@ class RouteCard extends StatelessWidget {
             ),
           ],
         ),
+        if (onModeChanged != null)
+          Padding(
+            padding: const EdgeInsetsDirectional.only(end: 8, bottom: 10),
+            child: SegmentedButton<TravelMode>(
+              showSelectedIcon: false,
+              segments: [
+                ButtonSegment(
+                    value: TravelMode.drive,
+                    icon: const Icon(Icons.directions_car),
+                    label: Text(t.modeDrive)),
+                ButtonSegment(
+                    value: TravelMode.walk,
+                    icon: const Icon(Icons.directions_walk),
+                    label: Text(t.modeWalk)),
+              ],
+              selected: {mode},
+              onSelectionChanged: (s) => onModeChanged!(s.first),
+            ),
+          ),
         if (loading)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 24),

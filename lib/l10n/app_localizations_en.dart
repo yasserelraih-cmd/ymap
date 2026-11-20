@@ -331,4 +331,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get more => 'More';
+
+  @override
+  String get modeDrive => 'Drive';
+
+  @override
+  String get modeWalk => 'Walk';
+
+  @override
+  String get navView3D => '3D view';
+
+  @override
+  String get navViewHeading => 'Heading up';
+
+  @override
+  String get navViewNorth => 'North up';
+
+  @override
+  String get report => 'Report';
 }

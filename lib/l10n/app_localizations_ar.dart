@@ -330,4 +330,22 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get more => 'المزيد';
+
+  @override
+  String get modeDrive => 'سيارة';
+
+  @override
+  String get modeWalk => 'مشي';
+
+  @override
+  String get navView3D => 'عرض ثلاثي الأبعاد';
+
+  @override
+  String get navViewHeading => 'عرض باتجاه السير';
+
+  @override
+  String get navViewNorth => 'الشمال للأعلى';
+
+  @override
+  String get report => 'إبلاغ';
 }
