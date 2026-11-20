@@ -49,11 +49,11 @@ enum PlaceCategory {
     return switch (osmKey) {
       'link' => Icons.link,
       'car' => Icons.directions_car,
+      'railway' => Icons.subway,
       'highway' => Icons.signpost_outlined,
       'place' => Icons.location_city,
       'shop' => Icons.storefront,
       'tourism' => Icons.hotel,
-      'railway' => Icons.train,
       _ => Icons.place_outlined,
     };
   }

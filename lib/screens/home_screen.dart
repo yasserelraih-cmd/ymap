@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
+import 'package:maplibre_gl/maplibre_gl.dart' show LatLng;
 import 'package:share_plus/share_plus.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
@@ -28,6 +29,7 @@ import '../search/location_link.dart';
 import '../search/place.dart';
 import '../voice/speech_input.dart';
 import '../voice/voice_command.dart';
+import '../prayer/prayer_times.dart';
 import '../widgets/prayer_sheet.dart';
 import '../search/recent_searches.dart';
 import '../search/search_service.dart';
@@ -334,6 +336,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   bool get _navigating => _navRoute != null;
 
+  /// ليل أثناء القيادة: الخريطة تصير داكنة تلقائياً بعد المغرب وقبل الشروق
+  /// (إلا إذا اخترت «فاتح» صراحة من الإعدادات).
+  bool _navNight = false;
+
+  bool _isNightAt(double lat, double lon) {
+    if (widget.settings.themeMode == ThemeMode.light) return false;
+    final now = DateTime.now();
+    final day = PrayerCalculator.compute(date: now, lat: lat, lon: lon);
+    return now.isBefore(day.times[Prayer.sunrise]!) ||
+        now.isAfter(day.times[Prayer.maghrib]!);
+  }
+
   Future<void> _startNavigation({required bool simulate}) async {
     final routes = _routes;
     if (routes == null || routes.isEmpty || _place == null) return;
@@ -357,15 +371,18 @@ class _HomeScreenState extends State<HomeScreen> {
       await WakelockPlus.enable(); // الشاشة لا تنطفئ أثناء القيادة
     } catch (_) {}
     if (!mounted) return;
+    final start = route.points.first;
     setState(() {
+      _navNight = _isNightAt(start.lat, start.lon);
       _navRoute = route;
       _navState = null;
       _navSpeed = 0;
       _navOverview = false;
       _rerouting = false;
     });
-    await _mapKey.currentState?.showRoutes([route], 0, nav: true);
+    // نبدأ التتبع أولاً؛ رسم المسار قد ينتظر تحميل التصميم الليلي.
     _track(route, simulate: simulate, lang: lang);
+    unawaited(_mapKey.currentState?.showRoutes([route], 0, nav: true));
     unawaited(_loadRoadData(route));
   }
 
@@ -478,8 +495,15 @@ class _HomeScreenState extends State<HomeScreen> {
     final lat = s.offRoute ? fix.lat : s.snappedLat;
     final lon = s.offRoute ? fix.lon : s.snappedLon;
     final map = _mapKey.currentState;
-    await map?.setPuck(lat, lon,
-        bearing: s.offRoute ? (fix.headingDeg ?? s.bearing) : s.bearing);
+    unawaited(map?.setPuck(lat, lon,
+        bearing: s.offRoute ? (fix.headingDeg ?? s.bearing) : s.bearing));
+    if (!s.offRoute) {
+      unawaited(map?.updateNavProgress([
+        // نبدأ الأزرق من حيث يبدأ السهم حركته (قبل ثانية) ليتطابقا.
+        for (final p in remainingFrom(route.points, (s.progressM - speed * 0.9).clamp(0, double.infinity)))
+          LatLng(p.lat, p.lon),
+      ]));
+    }
     if (!_navOverview) {
       await map?.followDriving(
         lat: lat,
@@ -840,12 +864,19 @@ class _HomeScreenState extends State<HomeScreen> {
     return YmapMap(
       key: _mapKey,
       languageCode: Localizations.localeOf(context).languageCode,
-      dark: Theme.of(context).brightness == Brightness.dark,
+      dark: Theme.of(context).brightness == Brightness.dark || (_navigating && _navNight),
       isTablet: isTablet,
       onMessage: _showMessage,
       onRouteTapped: _selectRoute,
       navigating: _navigating,
     );
+  }
+
+  bool _metroOn = false;
+  Future<void> _toggleMetro() async {
+    setState(() => _metroOn = !_metroOn);
+    await _mapKey.currentState?.setMetro(_metroOn);
+    if (_metroOn && mounted) _showMessage(AppLocalizations.of(context).metroShown);
   }
 
   Future<void> _toggle3D() async {
@@ -907,6 +938,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   is3D: _is3D,
                   onToggle3D: _toggle3D,
                   onMyLocation: () => _mapKey.currentState?.goToMyLocation(),
+                  metroOn: _metroOn,
+                  onToggleMetro: _toggleMetro,
                 ),
               ),
               if (isTablet)
@@ -980,8 +1013,12 @@ class MapControls extends StatelessWidget {
     required this.is3D,
     required this.onToggle3D,
     required this.onMyLocation,
+    this.metroOn = false,
+    this.onToggleMetro,
   });
 
+  final bool metroOn;
+  final VoidCallback? onToggleMetro;
   final bool is3D;
   final VoidCallback onToggle3D;
   final VoidCallback onMyLocation;
@@ -996,6 +1033,20 @@ class MapControls extends StatelessWidget {
           onPressed: onToggle3D,
           icon: Icon(is3D ? Icons.map_outlined : Icons.view_in_ar_outlined),
         ),
+        if (onToggleMetro != null) ...[
+          const SizedBox(height: 8),
+          metroOn
+              ? IconButton.filled(
+                  tooltip: t.metro,
+                  onPressed: onToggleMetro,
+                  icon: const Icon(Icons.subway),
+                )
+              : IconButton.filledTonal(
+                  tooltip: t.metro,
+                  onPressed: onToggleMetro,
+                  icon: const Icon(Icons.subway_outlined),
+                ),
+        ],
         const SizedBox(height: 8),
         IconButton.filledTonal(
           tooltip: t.myLocation,

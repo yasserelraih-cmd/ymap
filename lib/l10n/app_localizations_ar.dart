@@ -534,4 +534,10 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get testVoice => 'جرّب الصوت';
+
+  @override
+  String get metro => 'مترو الرياض';
+
+  @override
+  String get metroShown => 'خطوط مترو الرياض ومحطاته (بيانات OpenStreetMap)';
 }

@@ -1,7 +1,7 @@
 name: ymap
 description: "YMAP - تطبيق خرائط وملاحة ذكي"
 publish_to: 'none'
-version: 0.11.0+12
+version: 0.12.0+13
 
 environment:
   sdk: ^3.14.0
@@ -32,6 +32,8 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   generate: true
+  assets:
+    - assets/data/
   fonts:
     - family: IBMPlexSansArabic
       fonts:

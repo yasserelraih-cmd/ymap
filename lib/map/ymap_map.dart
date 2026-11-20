@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:flutter/services.dart' show rootBundle;
 import 'dart:math' as math;
 import 'dart:math' show Point;
 
@@ -132,6 +134,19 @@ class YmapMapState extends State<YmapMap> {
 
   /// يرسم المسارات: البدائل رمادية والمختار أزرق عريض بحافة بيضاء.
   bool _navStyle = false;
+  Line? _remainCasing;
+  Line? _remainLine;
+
+  /// يقصّ الخط الأزرق ليبدأ من مكانك (ما قطعته يبقى رمادياً).
+  Future<void> updateNavProgress(List<LatLng> remaining) async {
+    final c = _controller;
+    final a = _remainCasing, b = _remainLine;
+    if (c == null || a == null || b == null || remaining.length < 2) return;
+    try {
+      await c.updateLine(a, LineOptions(geometry: remaining));
+      await c.updateLine(b, LineOptions(geometry: remaining));
+    } catch (_) {}
+  }
 
   Future<void> showRoutes(List<RouteResult> routes, int selected,
       {EdgeInsets? padding, bool nav = false}) async {
@@ -205,6 +220,93 @@ class YmapMapState extends State<YmapMap> {
     _alertCircles.addAll(added);
   }
 
+  // ===== مترو الرياض (بيانات OpenStreetMap) =====
+  static const _metroSource = 'ymap-metro-src';
+  bool _metroOn = false;
+  bool _metroDrawn = false;
+  bool get metroOn => _metroOn;
+
+  Future<void> setMetro(bool on) async {
+    _metroOn = on;
+    await _drawMetro();
+  }
+
+  Future<void> _drawMetro() async {
+    final c = _controller;
+    if (c == null) return;
+    if (_metroDrawn) {
+      _metroDrawn = false;
+      for (final id in ['ymap-metro-stops', 'ymap-metro-names', 'ymap-metro-lines', 'ymap-metro-casing']) {
+        try {
+          await c.removeLayer(id);
+        } catch (_) {}
+      }
+      try {
+        await c.removeSource(_metroSource);
+      } catch (_) {}
+    }
+    if (!_metroOn) return;
+    try {
+      final data = await rootBundle.loadString('assets/data/riyadh_metro.geojson');
+      await c.addGeoJsonSource(_metroSource, jsonDecode(data) as Map<String, dynamic>);
+      await c.addLineLayer(
+        _metroSource,
+        'ymap-metro-casing',
+        const LineLayerProperties(
+          lineColor: '#FFFFFF',
+          lineWidth: 7,
+          lineJoin: 'round',
+          lineCap: 'round',
+        ),
+        filter: ['==', ['get', 'kind'], 'line'],
+        enableInteraction: false,
+      );
+      await c.addLineLayer(
+        _metroSource,
+        'ymap-metro-lines',
+        const LineLayerProperties(
+          lineColor: ['get', 'color'],
+          lineWidth: 4,
+          lineJoin: 'round',
+          lineCap: 'round',
+        ),
+        filter: ['==', ['get', 'kind'], 'line'],
+        enableInteraction: false,
+      );
+      await c.addCircleLayer(
+        _metroSource,
+        'ymap-metro-stops',
+        const CircleLayerProperties(
+          circleRadius: 4.5,
+          circleColor: '#FFFFFF',
+          circleStrokeColor: '#1F2A37',
+          circleStrokeWidth: 2,
+        ),
+        filter: ['==', ['get', 'kind'], 'stop'],
+        minzoom: 11,
+        enableInteraction: false,
+      );
+      await c.addSymbolLayer(
+        _metroSource,
+        'ymap-metro-names',
+        SymbolLayerProperties(
+          textField: ['get', widget.languageCode == 'ar' ? 'name_ar' : 'name_en'],
+          textSize: 12,
+          textOffset: const [0, 1.3],
+          textAnchor: 'top',
+          textColor: widget.dark ? '#E6EEF0' : '#1F2A37',
+          textHaloColor: widget.dark ? '#0F1A1C' : '#FFFFFF',
+          textHaloWidth: 1.5,
+          textFont: const ['Noto Sans Regular'],
+        ),
+        filter: ['all', ['==', ['get', 'kind'], 'stop'], ['has', 'name_ar']],
+        minzoom: 13,
+        enableInteraction: false,
+      );
+      _metroDrawn = true;
+    } catch (_) {}
+  }
+
   // ===== سهم السيارة (طبقة خاصة، مسطّح على الطريق ويدور مع اتجاهك) =====
   static const _puckSource = 'ymap-puck-src';
   static const _puckLayer = 'ymap-puck-layer';
@@ -238,11 +340,41 @@ class YmapMapState extends State<YmapMap> {
         ],
       };
 
-  Future<void> setPuck(double lat, double lon, {double? bearing}) async {
+  int _puckAnim = 0;
+
+  /// يحرّك السهم بنعومة من مكانه السابق للجديد خلال ~0.9 ثانية
+  /// (الـGPS يعطي قراءة كل ثانية، فبدون هذا يقفز السهم).
+  Future<void> setPuck(double lat, double lon, {double? bearing, bool animate = true}) async {
+    final from = _puckAt;
+    final fromB = _puckBearing;
+    final toB = bearing ?? _puckBearing;
+    final gen = ++_puckAnim;
+    final far = from == null ||
+        (from.latitude - lat).abs() + (from.longitude - lon).abs() > 0.003;
+    if (!animate || far || !_puckLayerReady) {
+      return _placePuck(lat, lon, toB);
+    }
+    var diff = (toB - fromB) % 360;
+    if (diff > 180) diff -= 360;
+    if (diff < -180) diff += 360;
+    const steps = 12;
+    for (var i = 1; i <= steps; i++) {
+      if (gen != _puckAnim || !mounted) return;
+      final t = i / steps;
+      await _placePuck(
+        from.latitude + (lat - from.latitude) * t,
+        from.longitude + (lon - from.longitude) * t,
+        fromB + diff * t,
+      );
+      if (i < steps) await Future<void>.delayed(const Duration(milliseconds: 70));
+    }
+  }
+
+  Future<void> _placePuck(double lat, double lon, double bearing) async {
     final c = _controller;
     if (c == null) return;
     _puckAt = LatLng(lat, lon);
-    if (bearing != null) _puckBearing = bearing;
+    _puckBearing = bearing;
     await _ensureImages();
     final data = _point(lat, lon, _puckBearing);
     try {
@@ -354,7 +486,8 @@ class YmapMapState extends State<YmapMap> {
         tilt: threeD && !northUp ? 60 : 0,
         bearing: northUp ? 0 : bearing,
       )),
-      duration: const Duration(milliseconds: 600),
+      // قريبة من فترة الـGPS (ثانية) لتبدو الحركة متصلة.
+      duration: const Duration(milliseconds: 950),
     );
   }
 
@@ -384,6 +517,8 @@ class YmapMapState extends State<YmapMap> {
   Future<void> _drawRoutes() async {
     final c = _controller;
     if (c == null) return;
+    _remainCasing = null;
+    _remainLine = null;
     final old = _routeLines.keys.toList();
     _routeLines.clear();
     if (old.isNotEmpty) {
@@ -401,6 +536,23 @@ class YmapMapState extends State<YmapMap> {
       final geometry = [for (final p in _routes[i].points) LatLng(p.lat, p.lon)];
       final main = i == _selectedRoute;
       final nav = main && _navStyle;
+      if (nav) {
+        // الجزء الذي قطعته رمادي، والباقي أزرق فوقه (نحدّثه مع كل حركة).
+        final passedCasing = await c.addLine(LineOptions(
+          geometry: geometry,
+          lineColor: '#8D9AAB',
+          lineWidth: 17,
+          lineJoin: 'round',
+        ));
+        final passed = await c.addLine(LineOptions(
+          geometry: geometry,
+          lineColor: '#C2CCD8',
+          lineWidth: 12,
+          lineJoin: 'round',
+        ));
+        _routeLines[passedCasing] = i;
+        _routeLines[passed] = i;
+      }
       final casing = await c.addLine(LineOptions(
         geometry: geometry,
         lineColor: nav ? '#0B5FC4' : '#FFFFFF',
@@ -415,6 +567,10 @@ class YmapMapState extends State<YmapMap> {
       ));
       _routeLines[casing] = i;
       _routeLines[line] = i;
+      if (nav) {
+        _remainCasing = casing;
+        _remainLine = line;
+      }
     }
     await _drawDirection(_navStyle
         ? [for (final p in _routes[_selectedRoute].points) LatLng(p.lat, p.lon)]
@@ -598,13 +754,15 @@ class YmapMapState extends State<YmapMap> {
         _imagesReady = false;
         _puckLayerReady = false;
         _dirReady = false;
+        _metroDrawn = false;
+        await _drawMetro();
         await _drawRoutes();
         await _drawPlaceMarker();
         _alertCircles.clear();
         await _drawAlerts();
         final puck = _puckAt;
         if (puck != null) {
-          await setPuck(puck.latitude, puck.longitude);
+          await setPuck(puck.latitude, puck.longitude, animate: false);
         }
       },
       onUserLocationUpdated: (loc) => _user = loc.position,

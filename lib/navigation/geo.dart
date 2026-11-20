@@ -64,3 +64,20 @@ GeoPoint pointAlong(List<GeoPoint> pts, double meters) {
   }
   return pts.last;
 }
+
+/// بقية الخط من مسافة [fromM] متر حتى النهاية (أول نقطة هي موقعك على الخط).
+List<GeoPoint> remainingFrom(List<GeoPoint> pts, double fromM) {
+  if (pts.length < 2) return pts;
+  var walked = 0.0;
+  for (var i = 1; i < pts.length; i++) {
+    final d = distanceMeters(pts[i - 1].lat, pts[i - 1].lon, pts[i].lat, pts[i].lon);
+    if (walked + d >= fromM) {
+      final t = d == 0 ? 0.0 : ((fromM - walked) / d).clamp(0.0, 1.0);
+      final start = GeoPoint(pts[i - 1].lat + (pts[i].lat - pts[i - 1].lat) * t,
+          pts[i - 1].lon + (pts[i].lon - pts[i - 1].lon) * t);
+      return [start, ...pts.sublist(i)];
+    }
+    walked += d;
+  }
+  return [pts.last, pts.last];
+}

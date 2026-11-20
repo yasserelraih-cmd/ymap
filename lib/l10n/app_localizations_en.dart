@@ -535,4 +535,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get testVoice => 'Test voice';
+
+  @override
+  String get metro => 'Riyadh Metro';
+
+  @override
+  String get metroShown =>
+      'Riyadh Metro lines and stations (OpenStreetMap data)';
 }

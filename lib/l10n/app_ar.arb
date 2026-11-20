@@ -293,5 +293,7 @@
   "dialectSaudi": "سعودي",
   "dialectEgyptian": "مصري",
   "dialectStandard": "فصحى",
-  "testVoice": "جرّب الصوت"
+  "testVoice": "جرّب الصوت",
+  "metro": "مترو الرياض",
+  "metroShown": "خطوط مترو الرياض ومحطاته (بيانات OpenStreetMap)"
 }

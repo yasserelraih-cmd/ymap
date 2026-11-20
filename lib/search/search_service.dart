@@ -4,6 +4,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 
 import 'categories.dart';
+import 'metro_stations.dart';
 import 'place.dart';
 
 /// واجهة البحث (لتسهيل الاختبار واستبدال المحرك لاحقاً بخادم YMAP الخاص).
@@ -42,6 +43,10 @@ class PhotonSearchService implements SearchService {
   }) async {
     final q = query.trim();
     if (q.isEmpty) return const [];
+    // محطات المترو من البيانات المحلية أولاً.
+    final metro = (await MetroStations.load(lang: languageCode))
+        .search(q, nearLat: nearLat, nearLon: nearLon);
+    if (MetroStations.isGenericQuery(q)) return metro;
     final category = PlaceCategory.detect(q);
     if (category != null) {
       return nearby(category, nearLat: nearLat, nearLon: nearLon);
@@ -54,7 +59,7 @@ class PhotonSearchService implements SearchService {
       // Photon يدعم default/en/de/fr/it: «default» يعطي الأسماء المحلية (عربية).
       if (languageCode == 'en') 'lang': 'en',
     });
-    return _dedupe(places);
+    return [...metro, ..._dedupe(places).where((p) => !metro.any((m) => m.name == p.name))];
   }
 
   @override

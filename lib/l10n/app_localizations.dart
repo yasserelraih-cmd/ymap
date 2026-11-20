@@ -1063,6 +1063,18 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'جرّب الصوت'**
   String get testVoice;
+
+  /// No description provided for @metro.
+  ///
+  /// In ar, this message translates to:
+  /// **'مترو الرياض'**
+  String get metro;
+
+  /// No description provided for @metroShown.
+  ///
+  /// In ar, this message translates to:
+  /// **'خطوط مترو الرياض ومحطاته (بيانات OpenStreetMap)'**
+  String get metroShown;
 }
 
 class _AppLocalizationsDelegate

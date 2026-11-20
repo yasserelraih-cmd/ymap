@@ -160,5 +160,7 @@
   "dialectSaudi": "Saudi",
   "dialectEgyptian": "Egyptian",
   "dialectStandard": "Standard",
-  "testVoice": "Test voice"
+  "testVoice": "Test voice",
+  "metro": "Riyadh Metro",
+  "metroShown": "Riyadh Metro lines and stations (OpenStreetMap data)"
 }
