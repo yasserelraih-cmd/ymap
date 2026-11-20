@@ -221,7 +221,7 @@ abstract class AppLocalizations {
   /// No description provided for @locationDenied.
   ///
   /// In ar, this message translates to:
-  /// **'لم تسمح لـYMAP بالوصول لموقعك. فعّله من إعدادات الجوال.'**
+  /// **'لم يُسمح لـYMAP بموقعك. في الآيفون: الإعدادات ← الخصوصية والأمان ← خدمات الموقع ← اختر Chrome (أو «مواقع Safari») ← «أثناء الاستخدام» وفعّل «الموقع الدقيق»، ثم أعد فتح الصفحة.'**
   String get locationDenied;
 
   /// No description provided for @locationServiceOff.
@@ -1027,6 +1027,42 @@ abstract class AppLocalizations {
   /// In ar, this message translates to:
   /// **'أضفت {name} على طريقك'**
   String stopAddedSpeech(String name);
+
+  /// No description provided for @go.
+  ///
+  /// In ar, this message translates to:
+  /// **'ابدأ'**
+  String get go;
+
+  /// No description provided for @voiceDialect.
+  ///
+  /// In ar, this message translates to:
+  /// **'لهجة التوجيه الصوتي'**
+  String get voiceDialect;
+
+  /// No description provided for @dialectSaudi.
+  ///
+  /// In ar, this message translates to:
+  /// **'سعودي'**
+  String get dialectSaudi;
+
+  /// No description provided for @dialectEgyptian.
+  ///
+  /// In ar, this message translates to:
+  /// **'مصري'**
+  String get dialectEgyptian;
+
+  /// No description provided for @dialectStandard.
+  ///
+  /// In ar, this message translates to:
+  /// **'فصحى'**
+  String get dialectStandard;
+
+  /// No description provided for @testVoice.
+  ///
+  /// In ar, this message translates to:
+  /// **'جرّب الصوت'**
+  String get testVoice;
 }
 
 class _AppLocalizationsDelegate

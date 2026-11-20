@@ -5,7 +5,9 @@ import 'navigation_engine.dart';
 /// يقرر متى تُقال كل جملة صوتية وما نصها (مرة واحدة لكل مرحلة).
 /// المراحل: تنبيه مبكر (بعد X متر) ثم تنبيه عند الالتفاف.
 class VoiceGuide {
-  VoiceGuide(this.route, {required this.lang});
+  VoiceGuide(this.route, {required this.lang, this.dialect = VoiceDialect.saudi});
+
+  final VoiceDialect dialect;
 
   final RouteResult route;
   final String lang;
@@ -14,7 +16,7 @@ class VoiceGuide {
   /// يرجع الجملة التي يجب قولها الآن، أو null.
   String? next(NavState s, {double speedMps = 0}) {
     if (s.arrived) {
-      return _once('arrived', lang == 'ar' ? 'وصلت إلى وجهتك' : 'You have arrived');
+      return _once('arrived', lang == 'ar' ? dialect.arrived : 'You have arrived');
     }
     final i = s.nextManeuver;
     final m = route.maneuvers[i];
@@ -24,10 +26,10 @@ class VoiceGuide {
     final near = (speedMps * 7).clamp(60.0, 200.0);
 
     if (d <= near) {
-      return _once('$i-now', Instructions.text(m, lang));
+      return _once('$i-now', Instructions.spoken(m, lang, dialect));
     }
     if (d <= far && d > near * 1.8 && m.type != 4 && m.type != 5 && m.type != 6) {
-      return _once('$i-far', '${distancePhrase(d)}، ${Instructions.text(m, lang)}');
+      return _once('$i-far', '${distancePhrase(d)}، ${Instructions.spoken(m, lang, dialect)}');
     }
     return null;
   }

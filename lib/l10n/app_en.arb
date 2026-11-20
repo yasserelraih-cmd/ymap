@@ -20,7 +20,7 @@
   "myLocation": "My location",
   "layers": "Layers",
   "version": "Version {version}",
-  "locationDenied": "YMAP can't access your location. Allow it in your phone settings.",
+  "locationDenied": "YMAP can't access your location. On iPhone: Settings → Privacy & Security → Location Services → Chrome (or Safari Websites) → While Using, turn on Precise Location, then reload.",
   "locationServiceOff": "Location services are off. Turn them on and try again.",
   "mapLoadError": "Couldn't load the map. Check your internet connection.",
   "retry": "Retry",
@@ -154,5 +154,11 @@
   "methodEgypt": "Egyptian General Authority of Survey method — may differ slightly",
   "nearestMosque": "Nearest mosque",
   "stopAdded": "Stop added: {name}",
-  "stopAddedSpeech": "Added {name} on your way"
+  "stopAddedSpeech": "Added {name} on your way",
+  "go": "Go",
+  "voiceDialect": "Voice guidance dialect (Arabic)",
+  "dialectSaudi": "Saudi",
+  "dialectEgyptian": "Egyptian",
+  "dialectStandard": "Standard",
+  "testVoice": "Test voice"
 }

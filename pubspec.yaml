@@ -1,7 +1,7 @@
 name: ymap
 description: "YMAP - تطبيق خرائط وملاحة ذكي"
 publish_to: 'none'
-version: 0.10.0+10
+version: 0.11.0+12
 
 environment:
   sdk: ^3.14.0

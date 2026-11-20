@@ -73,7 +73,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get locationDenied =>
-      'YMAP can\'t access your location. Allow it in your phone settings.';
+      'YMAP can\'t access your location. On iPhone: Settings → Privacy & Security → Location Services → Chrome (or Safari Websites) → While Using, turn on Precise Location, then reload.';
 
   @override
   String get locationServiceOff =>
@@ -517,4 +517,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String stopAddedSpeech(String name) {
     return 'Added $name on your way';
   }
+
+  @override
+  String get go => 'Go';
+
+  @override
+  String get voiceDialect => 'Voice guidance dialect (Arabic)';
+
+  @override
+  String get dialectSaudi => 'Saudi';
+
+  @override
+  String get dialectEgyptian => 'Egyptian';
+
+  @override
+  String get dialectStandard => 'Standard';
+
+  @override
+  String get testVoice => 'Test voice';
 }

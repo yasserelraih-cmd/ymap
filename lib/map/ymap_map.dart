@@ -5,6 +5,7 @@ import 'package:maplibre_gl/maplibre_gl.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../alerts/road_alert.dart';
+import 'map_icons.dart';
 import '../l10n/app_localizations.dart';
 import '../routing/route.dart';
 import 'location_service.dart';
@@ -130,8 +131,11 @@ class YmapMapState extends State<YmapMap> {
   }
 
   /// يرسم المسارات: البدائل رمادية والمختار أزرق عريض بحافة بيضاء.
+  bool _navStyle = false;
+
   Future<void> showRoutes(List<RouteResult> routes, int selected,
-      {EdgeInsets? padding}) async {
+      {EdgeInsets? padding, bool nav = false}) async {
+    _navStyle = nav;
     _routes = routes;
     _selectedRoute = selected;
     await _drawRoutes();
@@ -165,8 +169,6 @@ class YmapMapState extends State<YmapMap> {
   }
 
   // ===== الملاحة: علامة سيارتك وكاميرا تتبعك =====
-  Circle? _puckHalo;
-  Circle? _puckDot;
   LatLng? _puckAt;
   bool _puckFollow = false;
 
@@ -203,41 +205,128 @@ class YmapMapState extends State<YmapMap> {
     _alertCircles.addAll(added);
   }
 
-  Future<void> setPuck(double lat, double lon) async {
+  // ===== سهم السيارة (طبقة خاصة، مسطّح على الطريق ويدور مع اتجاهك) =====
+  static const _puckSource = 'ymap-puck-src';
+  static const _puckLayer = 'ymap-puck-layer';
+  static const _dirSource = 'ymap-dir-src';
+  static const _dirLayer = 'ymap-dir-layer';
+  bool _imagesReady = false;
+  bool _puckLayerReady = false;
+  double _puckBearing = 0;
+
+  Future<void> _ensureImages() async {
+    final c = _controller;
+    if (c == null || _imagesReady) return;
+    try {
+      await c.addImage(MapIcons.puck, await MapIcons.puckPng(), false, 2);
+      await c.addImage(MapIcons.chevron, await MapIcons.chevronPng(), false, 2);
+      _imagesReady = true;
+    } catch (_) {}
+  }
+
+  Map<String, dynamic> _point(double lat, double lon, double b) => {
+        'type': 'FeatureCollection',
+        'features': [
+          {
+            'type': 'Feature',
+            'properties': {'b': b},
+            'geometry': {
+              'type': 'Point',
+              'coordinates': [lon, lat],
+            },
+          },
+        ],
+      };
+
+  Future<void> setPuck(double lat, double lon, {double? bearing}) async {
     final c = _controller;
     if (c == null) return;
     _puckAt = LatLng(lat, lon);
-    if (_puckDot == null) {
-      _puckHalo = await c.addCircle(CircleOptions(
-        geometry: _puckAt,
-        circleRadius: 22,
-        circleColor: '#2F7DF6',
-        circleOpacity: 0.18,
-      ));
-      _puckDot = await c.addCircle(CircleOptions(
-        geometry: _puckAt,
-        circleRadius: 9,
-        circleColor: '#2F7DF6',
-        circleStrokeColor: '#FFFFFF',
-        circleStrokeWidth: 4,
-      ));
-    } else {
-      await c.updateCircle(_puckHalo!, CircleOptions(geometry: _puckAt));
-      await c.updateCircle(_puckDot!, CircleOptions(geometry: _puckAt));
-    }
+    if (bearing != null) _puckBearing = bearing;
+    await _ensureImages();
+    final data = _point(lat, lon, _puckBearing);
+    try {
+      if (!_puckLayerReady) {
+        await c.addGeoJsonSource(_puckSource, data);
+        await c.addSymbolLayer(
+          _puckSource,
+          _puckLayer,
+          const SymbolLayerProperties(
+            iconImage: MapIcons.puck,
+            iconSize: 0.9,
+            iconRotate: ['get', 'b'],
+            iconRotationAlignment: 'map',
+            iconPitchAlignment: 'map',
+            iconAllowOverlap: true,
+            iconIgnorePlacement: true,
+          ),
+          enableInteraction: false,
+        );
+        _puckLayerReady = true;
+      } else {
+        await c.setGeoJsonSource(_puckSource, data);
+      }
+    } catch (_) {}
   }
 
   Future<void> clearPuck() async {
     final c = _controller;
-    final ids = [?_puckHalo, ?_puckDot];
-    _puckHalo = null;
-    _puckDot = null;
     _puckAt = null;
-    if (c != null && ids.isNotEmpty) {
+    if (c == null || !_puckLayerReady) return;
+    _puckLayerReady = false;
+    try {
+      await c.removeLayer(_puckLayer);
+      await c.removeSource(_puckSource);
+    } catch (_) {}
+  }
+
+  /// أسهم الاتجاه على مسار الملاحة.
+  bool _dirReady = false;
+  Future<void> _drawDirection(List<LatLng>? line) async {
+    final c = _controller;
+    if (c == null) return;
+    if (_dirReady) {
+      _dirReady = false;
       try {
-        await c.removeCircles(ids);
+        await c.removeLayer(_dirLayer);
+        await c.removeSource(_dirSource);
       } catch (_) {}
     }
+    if (line == null || line.length < 2) return;
+    await _ensureImages();
+    try {
+      await c.addGeoJsonSource(_dirSource, {
+        'type': 'FeatureCollection',
+        'features': [
+          {
+            'type': 'Feature',
+            'properties': <String, dynamic>{},
+            'geometry': {
+              'type': 'LineString',
+              'coordinates': [
+                for (final p in line) [p.longitude, p.latitude],
+              ],
+            },
+          },
+        ],
+      });
+      await c.addSymbolLayer(
+        _dirSource,
+        _dirLayer,
+        const SymbolLayerProperties(
+          symbolPlacement: 'line',
+          symbolSpacing: 70,
+          iconImage: MapIcons.chevron,
+          iconSize: 0.75,
+          iconAllowOverlap: true,
+          iconIgnorePlacement: true,
+          iconRotationAlignment: 'map',
+          iconPitchAlignment: 'map',
+        ),
+        enableInteraction: false,
+      );
+      _dirReady = true;
+    } catch (_) {}
   }
 
   /// كاميرا القيادة: سيارتك في الثلث السفلي، الخريطة تدور مع الطريق.
@@ -286,6 +375,8 @@ class YmapMapState extends State<YmapMap> {
   }
 
   Future<void> clearRoutes() async {
+    _navStyle = false;
+    await _drawDirection(null);
     _routes = const [];
     await _drawRoutes();
   }
@@ -309,21 +400,25 @@ class YmapMapState extends State<YmapMap> {
     for (final i in order) {
       final geometry = [for (final p in _routes[i].points) LatLng(p.lat, p.lon)];
       final main = i == _selectedRoute;
+      final nav = main && _navStyle;
       final casing = await c.addLine(LineOptions(
         geometry: geometry,
-        lineColor: '#FFFFFF',
-        lineWidth: main ? 12 : 9,
+        lineColor: nav ? '#0B5FC4' : '#FFFFFF',
+        lineWidth: nav ? 17 : (main ? 12 : 9),
         lineJoin: 'round',
       ));
       final line = await c.addLine(LineOptions(
         geometry: geometry,
-        lineColor: main ? '#2F7DF6' : '#97A6BA',
-        lineWidth: main ? 8 : 6,
+        lineColor: nav ? '#1F8FFF' : (main ? '#2F7DF6' : '#97A6BA'),
+        lineWidth: nav ? 12 : (main ? 8 : 6),
         lineJoin: 'round',
       ));
       _routeLines[casing] = i;
       _routeLines[line] = i;
     }
+    await _drawDirection(_navStyle
+        ? [for (final p in _routes[_selectedRoute].points) LatLng(p.lat, p.lon)]
+        : null);
     // علامة الوجهة فوق المسار.
     await _drawPlaceMarker();
   }
@@ -499,20 +594,23 @@ class YmapMapState extends State<YmapMap> {
       },
       // تغيير التصميم (ليلي/لغة) يمسح العلامات والمسارات، فنعيد رسمها.
       onStyleLoadedCallback: () async {
+        // تصميم جديد = صور وطبقات جديدة.
+        _imagesReady = false;
+        _puckLayerReady = false;
+        _dirReady = false;
         await _drawRoutes();
         await _drawPlaceMarker();
         _alertCircles.clear();
         await _drawAlerts();
         final puck = _puckAt;
         if (puck != null) {
-          _puckHalo = null;
-          _puckDot = null;
           await setPuck(puck.latitude, puck.longitude);
         }
       },
       onUserLocationUpdated: (loc) => _user = loc.position,
       trackCameraPosition: true,
-      myLocationEnabled: _locationOn,
+      // أثناء الملاحة نخفي نقطة الموقع العادية؛ سهم السيارة يكفي.
+      myLocationEnabled: _locationOn && !widget.navigating,
       myLocationTrackingMode: _tracking,
       myLocationRenderMode: _locationOn
           ? MyLocationRenderMode.compass

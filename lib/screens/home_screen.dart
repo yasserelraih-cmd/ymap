@@ -235,6 +235,13 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  /// «ابدأ» من بطاقة المكان: نحسب المسار ثم ندخل شاشة الملاحة فوراً.
+  Future<void> _goNow() async {
+    await _startRouting();
+    if (!mounted || (_routes?.isEmpty ?? true)) return;
+    await _startNavigation(simulate: false);
+  }
+
   Future<void> _startRouting() async {
     final place = _place;
     if (place == null) return;
@@ -293,6 +300,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _navOverview = false;
   bool _rerouting = false;
   NavViewMode _navView = NavViewMode.threeD;
+  VoiceDialect get _dialect => VoiceDialect.fromCode(widget.settings.voiceDialect);
 
   // ===== التنبيهات وحدود السرعة =====
   final _alertStore = AlertStore();
@@ -344,7 +352,7 @@ class _HomeScreenState extends State<HomeScreen> {
     // أول جملة تُقال داخل ضغطة الزر: المتصفح (خصوصاً Safari) يسمح بالصوت بعدها.
     await _speaker.setLanguage(lang);
     unawaited(_speaker.say(
-        '${t.navStartSpeech} ${Instructions.text(route.maneuvers.first, lang)}'));
+        '${lang == 'ar' ? _dialect.start : t.navStartSpeech} ${Instructions.spoken(route.maneuvers.first, lang, _dialect)}'));
     try {
       await WakelockPlus.enable(); // الشاشة لا تنطفئ أثناء القيادة
     } catch (_) {}
@@ -356,7 +364,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _navOverview = false;
       _rerouting = false;
     });
-    await _mapKey.currentState?.showRoutes([route], 0);
+    await _mapKey.currentState?.showRoutes([route], 0, nav: true);
     _track(route, simulate: simulate, lang: lang);
     unawaited(_loadRoadData(route));
   }
@@ -443,7 +451,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _track(RouteResult route, {required bool simulate, required String lang}) {
     _engine = NavigationEngine(route);
-    _voice = VoiceGuide(route, lang: lang);
+    _voice = VoiceGuide(route, lang: lang, dialect: _dialect);
     _fixSub?.cancel();
     _source?.dispose();
     final source = simulate ? SimulatedPositionSource(route) : GpsPositionSource();
@@ -470,7 +478,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final lat = s.offRoute ? fix.lat : s.snappedLat;
     final lon = s.offRoute ? fix.lon : s.snappedLon;
     final map = _mapKey.currentState;
-    await map?.setPuck(lat, lon);
+    await map?.setPuck(lat, lon,
+        bearing: s.offRoute ? (fix.headingDeg ?? s.bearing) : s.bearing);
     if (!_navOverview) {
       await map?.followDriving(
         lat: lat,
@@ -540,7 +549,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final t = AppLocalizations.of(context);
     final lang = Localizations.localeOf(context).languageCode;
     setState(() => _rerouting = true);
-    unawaited(_speaker.say(t.navRerouteSpeech));
+    unawaited(_speaker.say(Localizations.localeOf(context).languageCode == 'ar'
+        ? _dialect.reroute
+        : t.navRerouteSpeech));
     try {
       final routes = await _routing.route(
         fromLat: fix.lat,
@@ -558,14 +569,14 @@ class _HomeScreenState extends State<HomeScreen> {
         _navRoute = route;
       });
       _engine = NavigationEngine(route);
-      _voice = VoiceGuide(route, lang: lang);
+      _voice = VoiceGuide(route, lang: lang, dialect: _dialect);
       _limits = SpeedLimits.empty;
       if (_mode == TravelMode.drive) {
         unawaited(_limitsService.forRoute(route).then((l) {
           if (identical(_navRoute, route)) _limits = l;
         }));
       }
-      await _mapKey.currentState?.showRoutes([route], 0);
+      await _mapKey.currentState?.showRoutes([route], 0, nav: true);
     } catch (_) {
       // نحاول مرة أخرى مع القراءة التالية خارج المسار.
     } finally {
@@ -595,7 +606,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final top = MediaQuery.paddingOf(context).top;
     if (_navOverview) {
       await _mapKey.currentState?.showRoutes([route], 0,
-          padding: EdgeInsets.fromLTRB(48, top + 150, 48, 130));
+          nav: true, padding: EdgeInsets.fromLTRB(48, top + 150, 48, 150));
     } else if (_navState != null) {
       final s = _navState!;
       await _mapKey.currentState?.followDriving(
@@ -776,6 +787,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onClose: _closePlace,
         onMessage: _showMessage,
         onDirections: _startRouting,
+        onGo: _goNow,
         isFavorite: _saved.isFavorite(place),
         onToggleFavorite:
             place.osmKey == 'car' ? null : () => _saved.toggleFavorite(place),

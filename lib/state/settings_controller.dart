@@ -6,6 +6,10 @@ class SettingsController extends ChangeNotifier {
   static const _kLanguage = 'language'; // 'ar' أو 'en' أو 'system'
   static const _kTheme = 'theme'; // 'light' أو 'dark' أو 'system'
   static const _kCameraAlerts = 'camera_alerts';
+  static const _kDialect = 'voice_dialect';
+
+  /// لهجة التوجيه الصوتي: sa سعودي، eg مصري، msa فصحى.
+  String voiceDialect = 'sa';
 
   /// تنبيهات الكاميرات (يمكن إيقافها في الدول التي تمنعها).
   bool cameraAlerts = true;
@@ -26,7 +30,15 @@ class SettingsController extends ChangeNotifier {
       _ => ThemeMode.system,
     };
     cameraAlerts = prefs.getBool(_kCameraAlerts) ?? true;
+    voiceDialect = prefs.getString(_kDialect) ?? 'sa';
     notifyListeners();
+  }
+
+  Future<void> setVoiceDialect(String code) async {
+    voiceDialect = code;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_kDialect, code);
   }
 
   Future<void> setCameraAlerts(bool on) async {

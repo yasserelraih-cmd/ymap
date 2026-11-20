@@ -9,9 +9,11 @@ import 'navigation_engine.dart';
 
 /// ألوان شاشة القيادة (هوية YMAP، بإلهام من تجربة AMap).
 class NavColors {
-  static const banner = Color(0xFF141B2D);
+  static const banner = Color(0xFF0E2A2E);
+  static const bannerEnd = Color(0xFF0B5A56);
   static const bannerText = Colors.white;
-  static const accent = Color(0xFF2F7DF6);
+  static const accent = Color(0xFF0B7A75);
+  static const route = Color(0xFF1F8FFF);
 }
 
 /// واجهة القيادة فوق الخريطة: الشريط العلوي، فقاعة السرعة، الأزرار، البطاقة السفلية.
@@ -73,124 +75,157 @@ class NavigationView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
     final lang = Localizations.localeOf(context).languageCode;
-    final top = MediaQuery.paddingOf(context).top;
+    final pad = MediaQuery.paddingOf(context);
     final s = state;
+    final t = AppLocalizations.of(context);
     return Stack(
       children: [
-        // الشريط العلوي.
+        // الشريط العلوي: الالتفافة القادمة + «ثم».
         PositionedDirectional(
-          start: 12,
-          end: 12,
-          top: top + 8,
-          child: _Banner(
-            route: route,
-            state: s,
-            lang: lang,
-            rerouting: rerouting,
-          ),
-        ),
-        // فقاعة السرعة.
-        PositionedDirectional(
-          start: 16,
-          top: top + 136,
+          start: 10,
+          end: 10,
+          top: pad.top + 6,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _SpeedBubble(
-                speedKmh: speedMps * 3.6,
-                unit: t.navKmh,
-                over: speedLimitKmh != null &&
-                    speedMps * 3.6 > speedLimitKmh! + 5,
-              ),
-              if (speedLimitKmh != null) ...[
-                const SizedBox(height: 8),
-                _LimitSign(limit: speedLimitKmh!),
-              ],
-              if (upcomingAlert != null && upcomingAlertM != null) ...[
-                const SizedBox(height: 8),
-                _AlertChip(type: upcomingAlert!, meters: upcomingAlertM!),
-              ],
+              _Banner(route: route, state: s, lang: lang, rerouting: rerouting),
+              if (upcomingAlert != null && upcomingAlertM != null)
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(top: 8, start: 4),
+                  child: _AlertChip(type: upcomingAlert!, meters: upcomingAlertM!),
+                ),
+              if (simulation)
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(top: 8, start: 4),
+                  child: Chip(
+                    visualDensity: VisualDensity.compact,
+                    avatar: const Icon(Icons.play_circle_outline, size: 18),
+                    label: Text(t.navPreviewBadge),
+                  ),
+                ),
             ],
           ),
         ),
-        // أزرار جانبية.
+        // زر الصوت (وزر الرجوع للمتابعة عند النظرة العامة).
         PositionedDirectional(
-          end: 16,
-          top: top + 136,
+          end: 12,
+          top: pad.top + 150,
           child: Column(
             children: [
               _RoundButton(
                 tooltip: muted ? t.navUnmute : t.navMute,
-                icon: muted ? Icons.volume_off : Icons.volume_up,
+                icon: muted ? Icons.volume_off_rounded : Icons.volume_up_rounded,
                 onTap: onToggleMute,
               ),
-              const SizedBox(height: 10),
-              _RoundButton(
-                tooltip: overview ? t.navRecenter : t.navOverview,
-                icon: overview ? Icons.navigation : Icons.alt_route,
-                onTap: onToggleOverview,
-              ),
-              if (onCycleView != null) ...[
+              if (overview) ...[
                 const SizedBox(height: 10),
                 _RoundButton(
-                  tooltip: switch (viewMode) {
-                    NavViewMode.threeD => t.navView3D,
-                    NavViewMode.headingUp => t.navViewHeading,
-                    NavViewMode.northUp => t.navViewNorth,
-                  },
-                  icon: switch (viewMode) {
-                    NavViewMode.threeD => Icons.view_in_ar,
-                    NavViewMode.headingUp => Icons.explore,
-                    NavViewMode.northUp => Icons.north,
-                  },
-                  onTap: onCycleView!,
-                ),
-              ],
-              if (onVoice != null) ...[
-                const SizedBox(height: 10),
-                _RoundButton(tooltip: t.voiceSearch, icon: Icons.mic, onTap: onVoice!),
-              ],
-              if (onShare != null) ...[
-                const SizedBox(height: 10),
-                _RoundButton(tooltip: t.shareTrip, icon: Icons.share, onTap: onShare!),
-              ],
-              if (onReport != null) ...[
-                const SizedBox(height: 10),
-                _RoundButton(
-                  tooltip: t.report,
-                  icon: Icons.campaign,
-                  onTap: onReport!,
+                  tooltip: t.navRecenter,
+                  icon: Icons.navigation_rounded,
+                  onTap: onToggleOverview,
                 ),
               ],
             ],
           ),
         ),
-        if (simulation)
-          PositionedDirectional(
-            start: 0,
-            end: 0,
-            top: top + 136,
-            child: Center(
-              child: Chip(
-                avatar: const Icon(Icons.play_circle_outline, size: 18),
-                label: Text(t.navPreviewBadge),
-              ),
-            ),
-          ),
-        // البطاقة السفلية.
+        // السرعة وحدّها، فوق البطاقة السفلية.
         PositionedDirectional(
           start: 12,
-          end: 12,
-          bottom: MediaQuery.paddingOf(context).bottom + 12,
+          bottom: pad.bottom + 108,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              _SpeedBubble(
+                speedKmh: speedMps * 3.6,
+                unit: t.navKmh,
+                over: speedLimitKmh != null && speedMps * 3.6 > speedLimitKmh! + 5,
+              ),
+              if (speedLimitKmh != null) ...[
+                const SizedBox(width: 8),
+                _LimitSign(limit: speedLimitKmh!),
+              ],
+            ],
+          ),
+        ),
+        // البطاقة السفلية.
+        PositionedDirectional(
+          start: 10,
+          end: 10,
+          bottom: pad.bottom + 10,
           child: _BottomCard(
             state: s,
             route: route,
             onEnd: onEnd,
-            onToggleOverview: onToggleOverview,
+            onMore: () => _showMore(context),
           ),
         ),
       ],
+    );
+  }
+
+  /// بقية الأدوات في قائمة واحدة بدل أزرار كثيرة فوق الخريطة.
+  void _showMore(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheet) {
+        Widget item(IconData icon, String label, VoidCallback? onTap) => onTap == null
+            ? const SizedBox.shrink()
+            : SizedBox(
+                width: 100,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () {
+                    Navigator.of(sheet).pop();
+                    onTap();
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: Column(
+                      children: [
+                        CircleAvatar(
+                          radius: 26,
+                          backgroundColor: NavColors.accent.withValues(alpha: 0.12),
+                          child: Icon(icon, color: NavColors.accent),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(label, textAlign: TextAlign.center, maxLines: 2),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            child: Wrap(
+              alignment: WrapAlignment.center,
+              children: [
+                item(Icons.alt_route, overview ? t.navRecenter : t.navOverview,
+                    onToggleOverview),
+                item(
+                  switch (viewMode) {
+                    NavViewMode.threeD => Icons.view_in_ar,
+                    NavViewMode.headingUp => Icons.explore,
+                    NavViewMode.northUp => Icons.north,
+                  },
+                  switch (viewMode) {
+                    NavViewMode.threeD => t.navView3D,
+                    NavViewMode.headingUp => t.navViewHeading,
+                    NavViewMode.northUp => t.navViewNorth,
+                  },
+                  onCycleView,
+                ),
+                item(Icons.mic, t.voiceSearch, onVoice),
+                item(Icons.share, t.shareTrip, onShare),
+                item(Icons.campaign, t.report, onReport),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -262,58 +297,89 @@ class _Banner extends StatelessWidget {
         ? route.maneuvers[nextIdx]
         : null;
 
-    return _shell(
-      child: Row(
-        children: [
-          Icon(Instructions.icon(m), color: Colors.white, size: 56),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _shell(
+          child: Row(
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Icon(Instructions.icon(m), color: Colors.white, size: 54),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text.rich(
+                      TextSpan(children: [
+                        TextSpan(
+                          text: parts.first,
+                          style: text.displaySmall?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            height: 1.0,
+                          ),
+                        ),
+                        TextSpan(
+                          text: ' ${parts.length > 1 ? parts[1] : ''}',
+                          style: text.titleMedium?.copyWith(color: Colors.white70),
+                        ),
+                      ]),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      street ?? Instructions.text(m, lang),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: text.titleMedium?.copyWith(
+                          color: Colors.white, fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (then != null)
+          Container(
+            margin: const EdgeInsetsDirectional.only(start: 18),
+            padding: const EdgeInsetsDirectional.fromSTEB(12, 6, 14, 8),
+            decoration: const BoxDecoration(
+              color: Color(0xFF0A1F22),
+              borderRadius: BorderRadius.vertical(bottom: Radius.circular(14)),
+            ),
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text.rich(
-                  TextSpan(children: [
-                    TextSpan(
-                      text: parts.first,
-                      style: text.displaySmall?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        height: 1.0,
-                      ),
-                    ),
-                    TextSpan(
-                      text: ' ${parts.length > 1 ? parts[1] : ''}',
-                      style: text.titleLarge?.copyWith(color: Colors.white70),
-                    ),
-                  ]),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  street ?? Instructions.text(m, lang),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: text.titleMedium?.copyWith(color: Colors.white),
-                ),
+                Text(t.navThen,
+                    style: text.titleSmall?.copyWith(color: Colors.white70)),
+                const SizedBox(width: 6),
+                Icon(Instructions.icon(then), color: Colors.white, size: 24),
               ],
             ),
           ),
-          if (then != null) ...[
-            const SizedBox(width: 8),
-            Text(t.navThen, style: text.titleSmall?.copyWith(color: Colors.white70)),
-            const SizedBox(width: 4),
-            Icon(Instructions.icon(then), color: Colors.white70, size: 28),
-          ],
-        ],
-      ),
+      ],
     );
   }
 
   Widget _shell({required Widget child}) => Container(
-        padding: const EdgeInsetsDirectional.fromSTEB(16, 14, 16, 14),
+        padding: const EdgeInsetsDirectional.fromSTEB(12, 12, 16, 12),
         decoration: BoxDecoration(
-          color: NavColors.banner,
-          borderRadius: BorderRadius.circular(24),
+          gradient: const LinearGradient(
+            begin: AlignmentDirectional.centerStart,
+            end: AlignmentDirectional.centerEnd,
+            colors: [NavColors.bannerEnd, NavColors.banner],
+          ),
+          borderRadius: BorderRadius.circular(22),
           boxShadow: const [BoxShadow(blurRadius: 12, color: Colors.black26)],
         ),
         child: child,
@@ -395,8 +461,8 @@ class _SpeedBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     return Container(
-      width: 76,
-      height: 76,
+      width: 64,
+      height: 64,
       decoration: BoxDecoration(
         color: over ? const Color(0xFFE5484D) : Colors.white,
         shape: BoxShape.circle,
@@ -450,13 +516,13 @@ class _BottomCard extends StatelessWidget {
     required this.state,
     required this.route,
     required this.onEnd,
-    required this.onToggleOverview,
+    required this.onMore,
   });
 
   final NavState? state;
   final RouteResult route;
   final VoidCallback onEnd;
-  final VoidCallback onToggleOverview;
+  final VoidCallback onMore;
 
   @override
   Widget build(BuildContext context) {
@@ -465,47 +531,66 @@ class _BottomCard extends StatelessWidget {
     final lang = Localizations.localeOf(context).languageCode;
     final remainingSec = state?.remainingSec ?? route.durationSec;
     final remainingM = state?.remainingM ?? route.distanceKm * 1000;
+    final total = route.distanceKm * 1000;
+    final progress = total <= 0 ? 0.0 : (1 - remainingM / total).clamp(0.0, 1.0);
     final duration = Duration(seconds: remainingSec.round());
     return Material(
-      elevation: 8,
-      borderRadius: BorderRadius.circular(28),
+      elevation: 10,
+      borderRadius: BorderRadius.circular(26),
+      clipBehavior: Clip.antiAlias,
       color: Theme.of(context).colorScheme.surface,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-        child: Row(
-          children: [
-            IconButton(
-              tooltip: t.navEnd,
-              iconSize: 30,
-              onPressed: onEnd,
-              icon: const Icon(Icons.close),
-            ),
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    t.navRemaining(
-                      RouteCard.formatDuration(t, duration),
-                      _Banner.distanceText(remainingM, lang),
-                    ),
-                    style: text.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          LinearProgressIndicator(
+            value: progress,
+            minHeight: 4,
+            color: NavColors.route,
+            backgroundColor: NavColors.route.withValues(alpha: 0.12),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 10, 8, 12),
+            child: Row(
+              children: [
+                IconButton.filledTonal(
+                  tooltip: t.navEnd,
+                  iconSize: 26,
+                  style: IconButton.styleFrom(
+                    backgroundColor: const Color(0xFFFDE8E8),
+                    foregroundColor: const Color(0xFFD13438),
                   ),
-                  Text(
-                    t.arriveAt(RouteCard.formatArrival(context, duration)),
-                    style: text.titleSmall,
+                  onPressed: onEnd,
+                  icon: const Icon(Icons.close_rounded),
+                ),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        RouteCard.formatDuration(t, duration),
+                        style: text.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: NavColors.accent,
+                        ),
+                      ),
+                      Text(
+                        '${_Banner.distanceText(remainingM, lang)}  ·  '
+                        '${t.arriveAt(RouteCard.formatArrival(context, duration))}',
+                        style: text.bodyMedium,
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                IconButton.filledTonal(
+                  tooltip: t.more,
+                  iconSize: 26,
+                  onPressed: onMore,
+                  icon: const Icon(Icons.more_horiz_rounded),
+                ),
+              ],
             ),
-            IconButton(
-              tooltip: t.navOverview,
-              iconSize: 30,
-              onPressed: onToggleOverview,
-              icon: const Icon(Icons.alt_route),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -2,12 +2,14 @@ import 'package:material_ui/material_ui.dart';
 
 import '../contrib/contributions.dart';
 import '../l10n/app_localizations.dart';
+import '../navigation/speaker.dart';
+import '../routing/instructions.dart';
 import 'contrib_dialogs.dart';
 import '../state/settings_controller.dart';
 
 
 /// رقم الإصدار المعروض في الإعدادات.
-const appVersion = '0.10.0';
+const appVersion = '0.11.0';
 
 /// نافذة الإعدادات: اللغة والمظهر (نهاري/ليلي/تلقائي).
 Future<void> showSettingsSheet(
@@ -67,6 +69,39 @@ Future<void> showSettingsSheet(
                   selected: {settings.themeMode},
                   onSelectionChanged: (s) => settings.setThemeMode(s.first),
                 ),
+                const SizedBox(height: 16),
+                Text(t.voiceDialect, style: Theme.of(context).textTheme.titleSmall),
+                const SizedBox(height: 8),
+                SegmentedButton<String>(
+                  showSelectedIcon: false,
+                  segments: [
+                    ButtonSegment(value: 'sa', label: Text(t.dialectSaudi)),
+                    ButtonSegment(value: 'eg', label: Text(t.dialectEgyptian)),
+                    ButtonSegment(value: 'msa', label: Text(t.dialectStandard)),
+                  ],
+                  selected: {settings.voiceDialect},
+                  onSelectionChanged: (v) => settings.setVoiceDialect(v.first),
+                ),
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: TextButton.icon(
+                    icon: const Icon(Icons.record_voice_over_outlined),
+                    label: Text(t.testVoice),
+                    onPressed: () async {
+                      final lang = Localizations.localeOf(context).languageCode;
+                      final d = VoiceDialect.fromCode(settings.voiceDialect);
+                      final sample = lang != 'ar'
+                          ? 'In 300 meters, turn right onto King Fahd Road'
+                          : switch (d) {
+                              VoiceDialect.saudi => 'بعد 300 متر، لف يمين على طريق الملك فهد',
+                              VoiceDialect.egyptian => 'بعد 300 متر، خش يمين على شارع النيل',
+                              VoiceDialect.standard => 'بعد 300 متر، انعطف يميناً إلى طريق الملك فهد',
+                            };
+                      await _sampleSpeaker.setLanguage(lang);
+                      await _sampleSpeaker.say(sample);
+                    },
+                  ),
+                ),
                 const SizedBox(height: 12),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
@@ -91,3 +126,5 @@ Future<void> showSettingsSheet(
     ),
   );
 }
+
+final _sampleSpeaker = Speaker();

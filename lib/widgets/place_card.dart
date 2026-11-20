@@ -16,6 +16,7 @@ class PlaceCard extends StatelessWidget {
     required this.onClose,
     required this.onMessage,
     required this.onDirections,
+    this.onGo,
     this.isFavorite = false,
     this.onToggleFavorite,
     this.onSetHome,
@@ -31,6 +32,9 @@ class PlaceCard extends StatelessWidget {
   final VoidCallback onClose;
   final void Function(String) onMessage;
   final VoidCallback onDirections;
+
+  /// «ابدأ»: يحسب المسار ويفتح شاشة الملاحة مباشرة (مثل AMap).
+  final VoidCallback? onGo;
   final bool isFavorite;
   final VoidCallback? onToggleFavorite;
   final VoidCallback? onSetHome;
@@ -140,24 +144,17 @@ class PlaceCard extends StatelessWidget {
             children: [
               Expanded(
                 child: FilledButton.icon(
-                  onPressed: onDirections,
-                  icon: const Icon(Icons.directions),
-                  label: Text(t.directions),
+                  onPressed: onGo ?? onDirections,
+                  icon: const Icon(Icons.navigation),
+                  label: Text(t.go),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () async {
-                    // رابط Google Maps لأنه يفتح عند الجميع (واتساب وغيره).
-                    await Clipboard.setData(ClipboardData(
-                      text: '${place.name}\n'
-                          '${LocationLink.googleMaps(place.lat, place.lon)}',
-                    ));
-                    onMessage(t.locationCopied);
-                  },
-                  icon: const Icon(Icons.copy),
-                  label: Text(t.copyLocation),
+                  onPressed: onDirections,
+                  icon: const Icon(Icons.directions),
+                  label: Text(t.directions),
                 ),
               ),
             ],
@@ -184,6 +181,19 @@ class PlaceCard extends StatelessWidget {
                   icon: const Icon(Icons.navigation_outlined),
                   label: Text(t.openWaze),
                 ),
+              ),
+              const SizedBox(width: 4),
+              IconButton.outlined(
+                tooltip: t.copyLocation,
+                onPressed: () async {
+                  // رابط Google Maps لأنه يفتح عند الجميع (واتساب وغيره).
+                  await Clipboard.setData(ClipboardData(
+                    text: '${place.name}\n'
+                        '${LocationLink.googleMaps(place.lat, place.lon)}',
+                  ));
+                  onMessage(t.locationCopied);
+                },
+                icon: const Icon(Icons.copy),
               ),
             ],
           ),

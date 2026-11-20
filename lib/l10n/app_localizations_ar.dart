@@ -73,7 +73,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get locationDenied =>
-      'لم تسمح لـYMAP بالوصول لموقعك. فعّله من إعدادات الجوال.';
+      'لم يُسمح لـYMAP بموقعك. في الآيفون: الإعدادات ← الخصوصية والأمان ← خدمات الموقع ← اختر Chrome (أو «مواقع Safari») ← «أثناء الاستخدام» وفعّل «الموقع الدقيق»، ثم أعد فتح الصفحة.';
 
   @override
   String get locationServiceOff =>
@@ -516,4 +516,22 @@ class AppLocalizationsAr extends AppLocalizations {
   String stopAddedSpeech(String name) {
     return 'أضفت $name على طريقك';
   }
+
+  @override
+  String get go => 'ابدأ';
+
+  @override
+  String get voiceDialect => 'لهجة التوجيه الصوتي';
+
+  @override
+  String get dialectSaudi => 'سعودي';
+
+  @override
+  String get dialectEgyptian => 'مصري';
+
+  @override
+  String get dialectStandard => 'فصحى';
+
+  @override
+  String get testVoice => 'جرّب الصوت';
 }

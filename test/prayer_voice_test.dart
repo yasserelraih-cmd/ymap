@@ -74,3 +74,4 @@ void main() {
     expect(pointAlong(pts, 99999).lat, 24.71);
   });
 }
+

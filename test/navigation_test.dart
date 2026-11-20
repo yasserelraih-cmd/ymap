@@ -5,6 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ymap/navigation/geo.dart';
 import 'package:ymap/navigation/navigation_engine.dart';
 import 'package:ymap/navigation/voice_guide.dart';
+import 'package:ymap/routing/instructions.dart';
+import 'package:ymap/routing/route.dart';
 import 'package:ymap/routing/routing_service.dart';
 
 void main() {
@@ -75,7 +77,7 @@ void main() {
     for (var i = 1; i < said.length; i++) {
       expect(said[i], isNot(said[i - 1]), reason: 'لا تكرار متتالٍ');
     }
-    expect(said.last, 'وصلت إلى وجهتك');
+    expect(said.last, 'وصلت، الحمد لله على السلامة');
     expect(said.where((s) => s.startsWith('بعد ')), isNotEmpty);
     // لا كلمات إنجليزية في الإرشاد العربي.
     for (final s in said) {
@@ -89,5 +91,14 @@ void main() {
     expect(v.distancePhrase(130), 'بعد 150 متر');
     expect(v.distancePhrase(1020), 'بعد كيلو');
     expect(v.distancePhrase(1600), 'بعد كيلو ونص');
+  });
+
+  test('اللهجات: سعودي ومصري وفصحى', () {
+    const right = Maneuver(type: 10, streetNames: ['طريق الملك فهد'], lengthKm: 1, timeSec: 60, beginShapeIndex: 0);
+    const left = Maneuver(type: 15, streetNames: [], lengthKm: 1, timeSec: 60, beginShapeIndex: 0);
+    expect(Instructions.spoken(right, 'ar', VoiceDialect.saudi), 'لف يمين على طريق الملك فهد');
+    expect(Instructions.spoken(left, 'ar', VoiceDialect.egyptian), 'خش شمال');
+    expect(Instructions.spoken(right, 'ar', VoiceDialect.standard), 'انعطف يميناً إلى طريق الملك فهد');
+    expect(Instructions.spoken(right, 'en', VoiceDialect.saudi), 'Turn right onto طريق الملك فهد');
   });
 }
