@@ -1,0 +1,37 @@
+{
+  "@@locale": "ar",
+  "appName": "YMAP",
+  "searchHint": "ابحث عن مكان أو عنوان",
+  "home": "البيت",
+  "work": "العمل",
+  "saved": "المحفوظات",
+  "nearby": "القريب",
+  "settings": "الإعدادات",
+  "language": "اللغة",
+  "languageSystem": "حسب الجهاز",
+  "languageArabic": "العربية",
+  "languageEnglish": "English",
+  "appearance": "المظهر",
+  "themeSystem": "تلقائي",
+  "themeLight": "نهاري",
+  "themeDark": "ليلي",
+  "mapComingTitle": "هنا ستظهر الخريطة",
+  "mapComingBody": "الخطوة 1.1: خريطة الرياض وموقعك عليها",
+  "myLocation": "موقعي",
+  "layers": "الطبقات",
+  "version": "الإصدار {version}",
+  "@version": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "locationDenied": "لم تسمح لـYMAP بالوصول لموقعك. فعّله من إعدادات الجوال.",
+  "locationServiceOff": "خدمة الموقع مغلقة في جوالك. شغّلها ثم حاول مرة أخرى.",
+  "mapLoadError": "تعذّر تحميل الخريطة. تأكد من الاتصال بالإنترنت.",
+  "retry": "إعادة المحاولة",
+  "attribution": "© مساهمو OpenStreetMap · OpenFreeMap",
+  "view3d": "منظور ثلاثي الأبعاد",
+  "view2d": "منظور مسطّح"
+}
