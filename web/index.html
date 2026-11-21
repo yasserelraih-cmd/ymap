@@ -64,6 +64,41 @@
     setRTLTextPlugin('https://unpkg.com/@mapbox/mapbox-gl-rtl-text@0.3.0/dist/mapbox-gl-rtl-text.js', true);
   </script>
   <script>
+    // بوصلة الجوال لاتجاه نقطة موقعك (آيفون يطلب إذناً بضغطة منك).
+    window.ymapCompass = {
+      heading: null,
+      started: false,
+      start: async function () {
+        try {
+          if (typeof DeviceOrientationEvent !== 'undefined' &&
+              typeof DeviceOrientationEvent.requestPermission === 'function') {
+            const r = await DeviceOrientationEvent.requestPermission();
+            if (r !== 'granted') return false;
+          }
+          if (!this.started) {
+            const h = (e) => {
+              let hd = null;
+              if (e.webkitCompassHeading != null) hd = e.webkitCompassHeading;
+              else if (e.absolute && e.alpha != null) hd = 360 - e.alpha;
+              if (hd != null) {
+                const a = (screen.orientation && screen.orientation.angle) || 0;
+                window.ymapCompass.heading = (hd + a + 360) % 360;
+              }
+            };
+            window.addEventListener('deviceorientationabsolute', h, true);
+            window.addEventListener('deviceorientation', h, true);
+            this.started = true;
+          }
+          return true;
+        } catch (e) { return false; }
+      },
+      needsPermission: function () {
+        return typeof DeviceOrientationEvent !== 'undefined' &&
+          typeof DeviceOrientationEvent.requestPermission === 'function';
+      }
+    };
+  </script>
+  <script>
     // حفظ الخريطة للاستخدام بدون إنترنت (المناطق التي فتحتها).
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => navigator.serviceWorker.register('ymap_sw.js'));

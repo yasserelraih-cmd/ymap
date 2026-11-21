@@ -1,17 +1,20 @@
+import 'dart:async';
 import 'dart:convert';
-import 'package:flutter/services.dart' show rootBundle;
 import 'dart:math' as math;
 import 'dart:math' show Point;
 
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:geolocator/geolocator.dart' show Position;
 import 'package:maplibre_gl/maplibre_gl.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../alerts/road_alert.dart';
-import 'map_icons.dart';
 import '../l10n/app_localizations.dart';
 import '../routing/route.dart';
+import 'compass/compass.dart';
 import 'location_service.dart';
 import 'map_style.dart';
+import 'nav_layers.dart';
 
 /// خريطة YMAP: بيانات OpenStreetMap عبر OpenFreeMap، تُعرض بمحرك MapLibre.
 class YmapMap extends StatefulWidget {
@@ -89,7 +92,6 @@ class YmapMapState extends State<YmapMap> {
   bool _styleError = false;
   bool _locationOn = false;
   bool _is3D = false;
-  MyLocationTrackingMode _tracking = MyLocationTrackingMode.none;
   LatLng? _user; // آخر موقع معروف لك
   LatLng? _placeTarget; // المكان المختار من البحث
   Circle? _placeMarker;
@@ -105,8 +107,6 @@ class YmapMapState extends State<YmapMap> {
   /// يعرض مكاناً من البحث: علامة على الخريطة + انتقال إليه.
   Future<void> showPlace(double lat, double lon) async {
     _placeTarget = LatLng(lat, lon);
-    _tracking = MyLocationTrackingMode.none;
-    await _controller?.updateMyLocationTrackingMode(MyLocationTrackingMode.none);
     await _drawPlaceMarker();
     await _controller?.animateCamera(
       CameraUpdate.newCameraPosition(CameraPosition(
@@ -134,18 +134,18 @@ class YmapMapState extends State<YmapMap> {
 
   /// يرسم المسارات: البدائل رمادية والمختار أزرق عريض بحافة بيضاء.
   bool _navStyle = false;
-  Line? _remainCasing;
-  Line? _remainLine;
+  NavLayers? _nav;
+  MeLayer? _me;
 
   /// يقصّ الخط الأزرق ليبدأ من مكانك (ما قطعته يبقى رمادياً).
   Future<void> updateNavProgress(List<LatLng> remaining) async {
-    final c = _controller;
-    final a = _remainCasing, b = _remainLine;
-    if (c == null || a == null || b == null || remaining.length < 2) return;
-    try {
-      await c.updateLine(a, LineOptions(geometry: remaining));
-      await c.updateLine(b, LineOptions(geometry: remaining));
-    } catch (_) {}
+    if (remaining.length < 2) return;
+    await _nav?.updateRemaining(remaining);
+  }
+
+  /// سهم الالتفاف القادم مرسوماً على الطريق (null = إخفاء).
+  Future<void> showTurnArrow(List<LatLng>? pts, double headBearing) async {
+    await _nav?.setTurnArrow(pts, headBearing);
   }
 
   Future<void> showRoutes(List<RouteResult> routes, int selected,
@@ -165,8 +165,6 @@ class YmapMapState extends State<YmapMap> {
       if (p.lon < minLon) minLon = p.lon;
       if (p.lon > maxLon) maxLon = p.lon;
     }
-    _tracking = MyLocationTrackingMode.none;
-    await _controller?.updateMyLocationTrackingMode(MyLocationTrackingMode.none);
     // نحسب الإطار بأنفسنا: newLatLngBounds في نسخة الويب يقفز لمكان خاطئ.
     if (!mounted) return;
     final size = context.size ?? MediaQuery.sizeOf(context);
@@ -307,43 +305,10 @@ class YmapMapState extends State<YmapMap> {
     } catch (_) {}
   }
 
-  // ===== سهم السيارة (طبقة خاصة، مسطّح على الطريق ويدور مع اتجاهك) =====
-  static const _puckSource = 'ymap-puck-src';
-  static const _puckLayer = 'ymap-puck-layer';
-  static const _dirSource = 'ymap-dir-src';
-  static const _dirLayer = 'ymap-dir-layer';
-  bool _imagesReady = false;
-  bool _puckLayerReady = false;
+  // ===== السيارة أثناء الملاحة (تتحرك بنعومة بين قراءات الـGPS) =====
   double _puckBearing = 0;
-
-  Future<void> _ensureImages() async {
-    final c = _controller;
-    if (c == null || _imagesReady) return;
-    try {
-      await c.addImage(MapIcons.puck, await MapIcons.puckPng(), false, 2);
-      await c.addImage(MapIcons.chevron, await MapIcons.chevronPng(), false, 2);
-      _imagesReady = true;
-    } catch (_) {}
-  }
-
-  Map<String, dynamic> _point(double lat, double lon, double b) => {
-        'type': 'FeatureCollection',
-        'features': [
-          {
-            'type': 'Feature',
-            'properties': {'b': b},
-            'geometry': {
-              'type': 'Point',
-              'coordinates': [lon, lat],
-            },
-          },
-        ],
-      };
-
   int _puckAnim = 0;
 
-  /// يحرّك السهم بنعومة من مكانه السابق للجديد خلال ~0.9 ثانية
-  /// (الـGPS يعطي قراءة كل ثانية، فبدون هذا يقفز السهم).
   Future<void> setPuck(double lat, double lon, {double? bearing, bool animate = true}) async {
     final from = _puckAt;
     final fromB = _puckBearing;
@@ -351,9 +316,7 @@ class YmapMapState extends State<YmapMap> {
     final gen = ++_puckAnim;
     final far = from == null ||
         (from.latitude - lat).abs() + (from.longitude - lon).abs() > 0.003;
-    if (!animate || far || !_puckLayerReady) {
-      return _placePuck(lat, lon, toB);
-    }
+    if (!animate || far) return _placePuck(lat, lon, toB);
     var diff = (toB - fromB) % 360;
     if (diff > 180) diff -= 360;
     if (diff < -180) diff += 360;
@@ -371,94 +334,50 @@ class YmapMapState extends State<YmapMap> {
   }
 
   Future<void> _placePuck(double lat, double lon, double bearing) async {
-    final c = _controller;
-    if (c == null) return;
     _puckAt = LatLng(lat, lon);
     _puckBearing = bearing;
-    await _ensureImages();
-    final data = _point(lat, lon, _puckBearing);
-    try {
-      if (!_puckLayerReady) {
-        await c.addGeoJsonSource(_puckSource, data);
-        await c.addSymbolLayer(
-          _puckSource,
-          _puckLayer,
-          const SymbolLayerProperties(
-            iconImage: MapIcons.puck,
-            iconSize: 0.9,
-            iconRotate: ['get', 'b'],
-            iconRotationAlignment: 'map',
-            iconPitchAlignment: 'map',
-            iconAllowOverlap: true,
-            iconIgnorePlacement: true,
-          ),
-          enableInteraction: false,
-        );
-        _puckLayerReady = true;
-      } else {
-        await c.setGeoJsonSource(_puckSource, data);
-      }
-    } catch (_) {}
+    await _nav?.setCar(_puckAt, bearing);
   }
 
   Future<void> clearPuck() async {
-    final c = _controller;
     _puckAt = null;
-    if (c == null || !_puckLayerReady) return;
-    _puckLayerReady = false;
-    try {
-      await c.removeLayer(_puckLayer);
-      await c.removeSource(_puckSource);
-    } catch (_) {}
+    ++_puckAnim;
+    await _nav?.setCar(null, 0);
   }
 
-  /// أسهم الاتجاه على مسار الملاحة.
-  bool _dirReady = false;
-  Future<void> _drawDirection(List<LatLng>? line) async {
-    final c = _controller;
-    if (c == null) return;
-    if (_dirReady) {
-      _dirReady = false;
-      try {
-        await c.removeLayer(_dirLayer);
-        await c.removeSource(_dirSource);
-      } catch (_) {}
-    }
-    if (line == null || line.length < 2) return;
-    await _ensureImages();
-    try {
-      await c.addGeoJsonSource(_dirSource, {
-        'type': 'FeatureCollection',
-        'features': [
-          {
-            'type': 'Feature',
-            'properties': <String, dynamic>{},
-            'geometry': {
-              'type': 'LineString',
-              'coordinates': [
-                for (final p in line) [p.longitude, p.latitude],
-              ],
-            },
-          },
-        ],
-      });
-      await c.addSymbolLayer(
-        _dirSource,
-        _dirLayer,
-        const SymbolLayerProperties(
-          symbolPlacement: 'line',
-          symbolSpacing: 70,
-          iconImage: MapIcons.chevron,
-          iconSize: 0.75,
-          iconAllowOverlap: true,
-          iconIgnorePlacement: true,
-          iconRotationAlignment: 'map',
-          iconPitchAlignment: 'map',
-        ),
-        enableInteraction: false,
-      );
-      _dirReady = true;
-    } catch (_) {}
+  // ===== نقطة موقعك (خارج الملاحة) مع مخروط الاتجاه من البوصلة =====
+  StreamSubscription<Position>? _meSub;
+  Timer? _compassTimer;
+  double? _heading;
+  bool _compassFollow = false; // الضغطة الثانية على «موقعي»: الخريطة تدور مع اتجاهك
+
+  void _startMeUpdates() {
+    _meSub ??= _location.stream().listen((pos) {
+      _user = LatLng(pos.latitude, pos.longitude);
+      if (pos.heading > 0 && pos.speed > 1.5 && Compass.heading == null) {
+        _heading = pos.heading;
+      }
+      _drawMe();
+    }, onError: (_) {});
+    // البوصلة تعمل مباشرة في أندرويد؛ آيفون يحتاج ضغطة منك (زر «موقعي»).
+    if (!Compass.needsPermission) unawaited(Compass.start());
+    _compassTimer ??= Timer.periodic(const Duration(milliseconds: 250), (_) {
+      final h = Compass.heading;
+      if (h == null) return;
+      final old = _heading;
+      if (old != null && ((h - old + 540) % 360 - 180).abs() < 3) return;
+      _heading = h;
+      _drawMe();
+      if (_compassFollow && !widget.navigating && _user != null) {
+        _controller?.moveCamera(CameraUpdate.bearingTo(h));
+      }
+    });
+  }
+
+  Future<void> _drawMe() async {
+    final me = _me;
+    if (me == null) return;
+    await me.update(widget.navigating ? null : _user, _heading);
   }
 
   /// كاميرا القيادة: سيارتك في الثلث السفلي، الخريطة تدور مع الطريق.
@@ -469,15 +388,19 @@ class YmapMapState extends State<YmapMap> {
     required double speedMps,
     required bool threeD,
     bool northUp = false,
+    bool nearTurn = false,
   }) async {
     if (!mounted) return;
     _puckFollow = true;
-    final zoom = speedMps > 22 ? 15.6 : (speedMps > 12 ? 16.3 : 17.0);
+    // قريب من الالتفاف: نقرّب كثيراً لتظهر الحارات وسهم الالتفاف بوضوح.
+    final zoom = nearTurn
+        ? 18.3
+        : (speedMps > 22 ? 16.2 : (speedMps > 12 ? 16.9 : 17.6));
     final height = context.size?.height ?? 800;
     // كم متر نتقدم للأمام حتى تظهر السيارة أسفل منتصف الشاشة.
     final metersPerPx =
         156543.03 * math.cos(lat * math.pi / 180) / math.pow(2, zoom) / 2;
-    final ahead = northUp ? 0.0 : height * (threeD ? 0.16 : 0.22) * metersPerPx;
+    final ahead = northUp ? 0.0 : height * (nearTurn ? 0.08 : (threeD ? 0.15 : 0.2)) * metersPerPx;
     final target = _moveBy(lat, lon, bearing, ahead);
     await _controller?.animateCamera(
       CameraUpdate.newCameraPosition(CameraPosition(
@@ -509,7 +432,6 @@ class YmapMapState extends State<YmapMap> {
 
   Future<void> clearRoutes() async {
     _navStyle = false;
-    await _drawDirection(null);
     _routes = const [];
     await _drawRoutes();
   }
@@ -517,8 +439,6 @@ class YmapMapState extends State<YmapMap> {
   Future<void> _drawRoutes() async {
     final c = _controller;
     if (c == null) return;
-    _remainCasing = null;
-    _remainLine = null;
     final old = _routeLines.keys.toList();
     _routeLines.clear();
     if (old.isNotEmpty) {
@@ -526,7 +446,19 @@ class YmapMapState extends State<YmapMap> {
         await c.removeLines(old);
       } catch (_) {}
     }
-    if (_routes.isEmpty) return;
+    if (_routes.isEmpty) {
+      await _nav?.clear();
+      return;
+    }
+    if (_navStyle) {
+      // أثناء الملاحة: طبقات خاصة (مسار عريض، أسهم، سهم الالتفاف، السيارة).
+      await _nav?.show([for (final p in _routes[_selectedRoute].points) LatLng(p.lat, p.lon)]);
+      final puck = _puckAt;
+      if (puck != null) await _nav?.setCar(puck, _puckBearing);
+      await _drawPlaceMarker();
+      return;
+    }
+    await _nav?.clear();
     final order = [
       for (var i = 0; i < _routes.length; i++)
         if (i != _selectedRoute) i,
@@ -535,46 +467,21 @@ class YmapMapState extends State<YmapMap> {
     for (final i in order) {
       final geometry = [for (final p in _routes[i].points) LatLng(p.lat, p.lon)];
       final main = i == _selectedRoute;
-      final nav = main && _navStyle;
-      if (nav) {
-        // الجزء الذي قطعته رمادي، والباقي أزرق فوقه (نحدّثه مع كل حركة).
-        final passedCasing = await c.addLine(LineOptions(
-          geometry: geometry,
-          lineColor: '#8D9AAB',
-          lineWidth: 17,
-          lineJoin: 'round',
-        ));
-        final passed = await c.addLine(LineOptions(
-          geometry: geometry,
-          lineColor: '#C2CCD8',
-          lineWidth: 12,
-          lineJoin: 'round',
-        ));
-        _routeLines[passedCasing] = i;
-        _routeLines[passed] = i;
-      }
       final casing = await c.addLine(LineOptions(
         geometry: geometry,
-        lineColor: nav ? '#0B5FC4' : '#FFFFFF',
-        lineWidth: nav ? 17 : (main ? 12 : 9),
+        lineColor: '#FFFFFF',
+        lineWidth: main ? 12 : 9,
         lineJoin: 'round',
       ));
       final line = await c.addLine(LineOptions(
         geometry: geometry,
-        lineColor: nav ? '#1F8FFF' : (main ? '#2F7DF6' : '#97A6BA'),
-        lineWidth: nav ? 12 : (main ? 8 : 6),
+        lineColor: main ? '#2F7DF6' : '#97A6BA',
+        lineWidth: main ? 8 : 6,
         lineJoin: 'round',
       ));
       _routeLines[casing] = i;
       _routeLines[line] = i;
-      if (nav) {
-        _remainCasing = casing;
-        _remainLine = line;
-      }
     }
-    await _drawDirection(_navStyle
-        ? [for (final p in _routes[_selectedRoute].points) LatLng(p.lat, p.lon)]
-        : null);
     // علامة الوجهة فوق المسار.
     await _drawPlaceMarker();
   }
@@ -644,7 +551,9 @@ class YmapMapState extends State<YmapMap> {
     }
   }
 
-  /// عند فتح التطبيق: نطلب صلاحية الموقع وننتقل لموقعك إن سمحت.
+  final _mapReady = Completer<void>();
+
+  /// عند فتح التطبيق: نطلب صلاحية الموقع، ننتظر جاهزية الخريطة، ثم ننتقل لموقعك.
   Future<void> _startLocation() async {
     final status = await _location.ensurePermission();
     if (!mounted || status != LocationStatus.granted) return;
@@ -652,15 +561,29 @@ class YmapMapState extends State<YmapMap> {
     final pos = await _location.current();
     if (pos == null || !mounted) return;
     _user = LatLng(pos.latitude, pos.longitude);
-    if (_placeTarget != null) return; // لا ننقل الخريطة إن كنت تشاهد مكاناً
+    _startMeUpdates();
+    await _mapReady.future;
+    if (!mounted) return;
+    await _drawMe();
+    if (_placeTarget != null || widget.navigating) return; // لا ننقل الخريطة إن كنت تشاهد مكاناً
     await _controller?.animateCamera(
-      CameraUpdate.newLatLngZoom(LatLng(pos.latitude, pos.longitude), 15),
+      CameraUpdate.newCameraPosition(CameraPosition(target: _user!, zoom: 16)),
     );
   }
 
-  /// زر «موقعي»: الضغطة الأولى تتبعك، والثانية تدير الخريطة مع اتجاهك.
+  @override
+  void dispose() {
+    _meSub?.cancel();
+    _compassTimer?.cancel();
+    super.dispose();
+  }
+
+  /// زر «موقعي»: الضغطة الأولى تنقلك لموقعك، والثانية تدير الخريطة مع اتجاهك،
+  /// والثالثة ترجعها للشمال.
   Future<void> goToMyLocation() async {
     final t = AppLocalizations.of(context);
+    // آيفون: إذن البوصلة يجب أن يُطلب من ضغطة زر.
+    unawaited(Compass.start());
     final status = await _location.ensurePermission();
     if (!mounted) return;
     switch (status) {
@@ -674,25 +597,31 @@ class YmapMapState extends State<YmapMap> {
       case LocationStatus.granted:
         break;
     }
-    final next = _tracking == MyLocationTrackingMode.tracking
-        ? MyLocationTrackingMode.trackingCompass
-        : MyLocationTrackingMode.tracking;
-    setState(() {
-      _locationOn = true;
-      _tracking = next;
-    });
+    setState(() => _locationOn = true);
+    _startMeUpdates();
     final pos = await _location.current();
     if (pos != null) _user = LatLng(pos.latitude, pos.longitude);
-    if (pos != null && mounted) {
-      await _controller?.animateCamera(
-        CameraUpdate.newCameraPosition(CameraPosition(
-          target: LatLng(pos.latitude, pos.longitude),
-          zoom: 16,
-          tilt: _is3D ? 60 : 0,
-        )),
-      );
+    final me = _user;
+    if (me == null || !mounted) return;
+    await _drawMe();
+    final cam = _controller?.cameraPosition;
+    final centered = cam != null &&
+        (cam.target.latitude - me.latitude).abs() < 0.0005 &&
+        (cam.target.longitude - me.longitude).abs() < 0.0005;
+    if (centered && !_compassFollow && _heading != null) {
+      _compassFollow = true;
+      await _controller?.animateCamera(CameraUpdate.newCameraPosition(
+          CameraPosition(target: me, zoom: 17, tilt: 45, bearing: _heading!)));
+      return;
     }
-    await _controller?.updateMyLocationTrackingMode(next);
+    _compassFollow = false;
+    await _controller?.animateCamera(
+      CameraUpdate.newCameraPosition(CameraPosition(
+        target: me,
+        zoom: 16.5,
+        tilt: _is3D ? 60 : 0,
+      )),
+    );
   }
 
   /// زر «الطبقات» مؤقتاً: تبديل بين منظور 2D ومنظور مائل 3D.
@@ -746,14 +675,15 @@ class YmapMapState extends State<YmapMap> {
           : const CameraPosition(target: YmapMap.riyadh, zoom: 11),
       onMapCreated: (c) {
         _controller = c;
+        _nav = NavLayers(c);
+        _me = MeLayer(c);
         c.onLineTapped.add(_onLineTapped);
       },
       // تغيير التصميم (ليلي/لغة) يمسح العلامات والمسارات، فنعيد رسمها.
       onStyleLoadedCallback: () async {
         // تصميم جديد = صور وطبقات جديدة.
-        _imagesReady = false;
-        _puckLayerReady = false;
-        _dirReady = false;
+        _me?.reset();
+        await _drawMe();
         _metroDrawn = false;
         await _drawMetro();
         await _drawRoutes();
@@ -764,17 +694,13 @@ class YmapMapState extends State<YmapMap> {
         if (puck != null) {
           await setPuck(puck.latitude, puck.longitude, animate: false);
         }
+        if (!_mapReady.isCompleted) _mapReady.complete();
       },
       onUserLocationUpdated: (loc) => _user = loc.position,
       trackCameraPosition: true,
       // أثناء الملاحة نخفي نقطة الموقع العادية؛ سهم السيارة يكفي.
-      myLocationEnabled: _locationOn && !widget.navigating,
-      myLocationTrackingMode: _tracking,
-      myLocationRenderMode: _locationOn
-          ? MyLocationRenderMode.compass
-          : MyLocationRenderMode.normal,
-      onCameraTrackingDismissed: () =>
-          setState(() => _tracking = MyLocationTrackingMode.none),
+      // نقطة الموقع نرسمها بأنفسنا (طبقة «ymap-me») لأنها أوضح وتعمل في آيفون.
+      myLocationEnabled: false,
       compassEnabled: !widget.navigating,
       compassViewPosition: compassPosition,
       compassViewMargins: compassMargins,

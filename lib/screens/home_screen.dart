@@ -504,6 +504,7 @@ class _HomeScreenState extends State<HomeScreen> {
           LatLng(p.lat, p.lon),
       ]));
     }
+    _updateTurnArrow(route, s);
     if (!_navOverview) {
       await map?.followDriving(
         lat: lat,
@@ -512,6 +513,7 @@ class _HomeScreenState extends State<HomeScreen> {
         speedMps: speed,
         threeD: _navView == NavViewMode.threeD,
         northUp: _navView == NavViewMode.northUp,
+        nearTurn: _nearTurn(s),
       );
     }
     final say = _voice?.next(s, speedMps: speed);
@@ -594,6 +596,7 @@ class _HomeScreenState extends State<HomeScreen> {
       });
       _engine = NavigationEngine(route);
       _voice = VoiceGuide(route, lang: lang, dialect: _dialect);
+      _turnShownFor = -1;
       _limits = SpeedLimits.empty;
       if (_mode == TravelMode.drive) {
         unawaited(_limitsService.forRoute(route).then((l) {
@@ -632,6 +635,45 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  /// قريب من التفافة حقيقية (ليست «استمر» ولا الوصول).
+  bool _nearTurn(NavState s) {
+    final route = _navRoute;
+    if (route == null || s.offRoute) return false;
+    if (s.nextManeuver >= route.maneuvers.length) return false;
+    final type = route.maneuvers[s.nextManeuver].type;
+    const notTurns = {1, 2, 3, 4, 5, 6, 8, 22};
+    return !notTurns.contains(type) && s.distanceToManeuverM < 180;
+  }
+
+  int _turnShownFor = -1;
+
+  /// سهم الالتفاف مرسوم على الطريق: من قبل الالتفاف بـ 40م إلى بعده بـ 30م.
+  void _updateTurnArrow(RouteResult route, NavState s) {
+    final map = _mapKey.currentState;
+    if (map == null) return;
+    final show = !s.offRoute &&
+        s.nextManeuver < route.maneuvers.length &&
+        s.distanceToManeuverM < 400 &&
+        !const {1, 2, 3, 4, 5, 6, 8, 22}.contains(route.maneuvers[s.nextManeuver].type);
+    if (!show) {
+      if (_turnShownFor != -1) {
+        _turnShownFor = -1;
+        unawaited(map.showTurnArrow(null, 0));
+      }
+      return;
+    }
+    if (_turnShownFor == s.nextManeuver) return;
+    _turnShownFor = s.nextManeuver;
+    final at = s.progressM + s.distanceToManeuverM;
+    final pts = sliceBetween(route.points, at - 40, at + 30);
+    if (pts.length < 2) return;
+    final a = pts[pts.length - 2], b = pts.last;
+    unawaited(map.showTurnArrow(
+      [for (final p in pts) LatLng(p.lat, p.lon)],
+      bearingDegrees(a.lat, a.lon, b.lat, b.lon),
+    ));
+  }
+
   Future<void> _cycleNavView() async {
     setState(() => _navView =
         NavViewMode.values[(_navView.index + 1) % NavViewMode.values.length]);
@@ -644,6 +686,7 @@ class _HomeScreenState extends State<HomeScreen> {
       speedMps: _navSpeed,
       threeD: _navView == NavViewMode.threeD,
       northUp: _navView == NavViewMode.northUp,
+      nearTurn: _nearTurn(s),
     );
   }
 
@@ -677,6 +720,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _voice = null;
     unawaited(_finishTrack());
     _via = const [];
+    _turnShownFor = -1;
     _watcher = null;
     _limits = SpeedLimits.empty;
     _upcoming = null;

@@ -81,3 +81,26 @@ List<GeoPoint> remainingFrom(List<GeoPoint> pts, double fromM) {
   }
   return [pts.last, pts.last];
 }
+
+/// جزء الخط بين مسافتين من بدايته (لرسم سهم الالتفاف على الطريق).
+List<GeoPoint> sliceBetween(List<GeoPoint> pts, double fromM, double toM) {
+  if (pts.length < 2 || toM <= fromM) return const [];
+  final out = <GeoPoint>[];
+  var walked = 0.0;
+  for (var i = 1; i < pts.length; i++) {
+    final a = pts[i - 1], b = pts[i];
+    final d = distanceMeters(a.lat, a.lon, b.lat, b.lon);
+    final segStart = walked, segEnd = walked + d;
+    if (segEnd >= fromM && segStart <= toM && d > 0) {
+      GeoPoint at(double m) {
+        final t = ((m - segStart) / d).clamp(0.0, 1.0);
+        return GeoPoint(a.lat + (b.lat - a.lat) * t, a.lon + (b.lon - a.lon) * t);
+      }
+      if (out.isEmpty) out.add(at(fromM < segStart ? segStart : fromM));
+      out.add(at(toM > segEnd ? segEnd : toM));
+    }
+    walked = segEnd;
+    if (walked > toM) break;
+  }
+  return out;
+}

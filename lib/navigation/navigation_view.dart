@@ -9,7 +9,7 @@ import 'navigation_engine.dart';
 
 /// ألوان شاشة القيادة (هوية YMAP، بإلهام من تجربة AMap).
 class NavColors {
-  static const banner = Color(0xFF0E2A2E);
+  static const banner = Color(0xFF14202B);
   static const bannerEnd = Color(0xFF0B5A56);
   static const bannerText = Colors.white;
   static const accent = Color(0xFF0B7A75);
@@ -91,7 +91,7 @@ class NavigationView extends StatelessWidget {
           end: 10,
           top: pad.top + 6,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               _Banner(route: route, state: s, lang: lang, rerouting: rerouting),
               if (upcomingAlert != null && upcomingAlertM != null)
@@ -125,8 +125,8 @@ class NavigationView extends StatelessWidget {
         ),
         // زر الصوت (وزر الرجوع للمتابعة عند النظرة العامة).
         PositionedDirectional(
-          end: 12,
-          top: pad.top + 150,
+          start: 12,
+          bottom: pad.bottom + 108,
           child: Column(
             children: [
               _RoundButton(
@@ -145,12 +145,24 @@ class NavigationView extends StatelessWidget {
             ],
           ),
         ),
-        // السرعة وحدّها، فوق البطاقة السفلية.
+        // شريط تقدم الرحلة عمودياً على الحافة (السيارة تصعد نحو الوجهة).
+        PositionedDirectional(
+          end: 6,
+          top: pad.top + 120,
+          bottom: pad.bottom + 110,
+          child: _TripBar(
+            progress: (() {
+              final total = route.distanceKm * 1000;
+              final rem = s?.remainingM ?? total;
+              return total <= 0 ? 0.0 : (1 - rem / total).clamp(0.0, 1.0);
+            })(),
+          ),
+        ),
+        // السرعة وحدّها تحت الشريط العلوي.
         PositionedDirectional(
           start: 12,
-          bottom: pad.bottom + 108,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
+          top: pad.top + 112,
+          child: Column(
             children: [
               _SpeedBubble(
                 speedKmh: speedMps * 3.6,
@@ -158,7 +170,7 @@ class NavigationView extends StatelessWidget {
                 over: speedLimitKmh != null && speedMps * 3.6 > speedLimitKmh! + 5,
               ),
               if (speedLimitKmh != null) ...[
-                const SizedBox(width: 8),
+                const SizedBox(height: 8),
                 _LimitSign(limit: speedLimitKmh!),
               ],
             ],
@@ -313,88 +325,52 @@ class _Banner extends StatelessWidget {
         ? route.maneuvers[nextIdx]
         : null;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _shell(
-          child: Row(
-            children: [
-              Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: Icon(Instructions.icon(m), color: Colors.white, size: 54),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text.rich(
-                      TextSpan(children: [
-                        TextSpan(
-                          text: parts.first,
-                          style: text.displaySmall?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                            height: 1.0,
-                          ),
-                        ),
-                        TextSpan(
-                          text: ' ${parts.length > 1 ? parts[1] : ''}',
-                          style: text.titleMedium?.copyWith(color: Colors.white70),
-                        ),
-                      ]),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      street ?? Instructions.text(m, lang),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: text.titleMedium?.copyWith(
-                          color: Colors.white, fontWeight: FontWeight.w500),
-                    ),
-                  ],
+    // سطر واحد: السهم، المسافة، الشارع، ثم «ثم» والالتفاف التالي.
+    return _shell(
+      child: Row(
+        children: [
+          Icon(Instructions.icon(m), color: Colors.white, size: 52),
+          const SizedBox(width: 8),
+          Text.rich(
+            TextSpan(children: [
+              TextSpan(
+                text: parts.first,
+                style: text.displaySmall?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  height: 1.0,
                 ),
               ),
-            ],
+              TextSpan(
+                text: ' ${parts.length > 1 ? parts[1] : ''}',
+                style: text.titleLarge?.copyWith(color: Colors.white60),
+              ),
+            ]),
           ),
-        ),
-        if (then != null)
-          Container(
-            margin: const EdgeInsetsDirectional.only(start: 18),
-            padding: const EdgeInsetsDirectional.fromSTEB(12, 6, 14, 8),
-            decoration: const BoxDecoration(
-              color: Color(0xFF0A1F22),
-              borderRadius: BorderRadius.vertical(bottom: Radius.circular(14)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(t.navThen,
-                    style: text.titleSmall?.copyWith(color: Colors.white70)),
-                const SizedBox(width: 6),
-                Icon(Instructions.icon(then), color: Colors.white, size: 24),
-              ],
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              street ?? Instructions.text(m, lang),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: text.titleLarge?.copyWith(
+                  color: Colors.white, fontWeight: FontWeight.w600, height: 1.15),
             ),
           ),
-      ],
+          if (then != null) ...[
+            const SizedBox(width: 8),
+            Text(t.navThen, style: text.titleMedium?.copyWith(color: Colors.white60)),
+            Icon(Instructions.icon(then), color: Colors.white70, size: 26),
+          ],
+        ],
+      ),
     );
   }
 
   Widget _shell({required Widget child}) => Container(
-        padding: const EdgeInsetsDirectional.fromSTEB(12, 12, 16, 12),
+        padding: const EdgeInsetsDirectional.fromSTEB(14, 14, 16, 14),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: AlignmentDirectional.centerStart,
-            end: AlignmentDirectional.centerEnd,
-            colors: [NavColors.bannerEnd, NavColors.banner],
-          ),
+          color: NavColors.banner,
           borderRadius: BorderRadius.circular(22),
           boxShadow: const [BoxShadow(blurRadius: 12, color: Colors.black26)],
         ),
@@ -608,6 +584,70 @@ class _BottomCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// شريط تقدم الرحلة العمودي.
+class _TripBar extends StatelessWidget {
+  const _TripBar({required this.progress});
+  final double progress;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 22,
+      child: LayoutBuilder(builder: (context, c) {
+        final h = c.maxHeight;
+        return Stack(
+          alignment: Alignment.topCenter,
+          clipBehavior: Clip.none,
+          children: [
+            Positioned.fill(
+              left: 7,
+              right: 7,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: NavColors.route.withValues(alpha: 0.85),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: Colors.white, width: 1.5),
+                ),
+              ),
+            ),
+            // المقطوع (من الأسفل) رمادي
+            Positioned(
+              left: 7,
+              right: 7,
+              bottom: 0,
+              height: h * progress,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFB8C3D1),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: Colors.white, width: 1.5),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: h * progress - 11,
+              child: Container(
+                width: 22,
+                height: 22,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [BoxShadow(blurRadius: 4, color: Colors.black26)],
+                ),
+                child: const Icon(Icons.navigation, size: 15, color: NavColors.route),
+              ),
+            ),
+            const Positioned(
+              top: -12,
+              child: Icon(Icons.flag_circle, size: 24, color: Color(0xFFD13438)),
+            ),
+          ],
+        );
+      }),
     );
   }
 }

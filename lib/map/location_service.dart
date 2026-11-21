@@ -51,6 +51,17 @@ class LocationService {
         ),
       ).timeout(const Duration(seconds: 20));
 
+  /// تحديثات مستمرة لموقعك (لنقطة الموقع على الخريطة).
+  Stream<Position> stream() => Geolocator.getPositionStream(
+        locationSettings: kIsWeb
+            ? WebSettings(
+                accuracy: LocationAccuracy.high,
+                distanceFilter: 3,
+                maximumAge: const Duration(seconds: 5),
+              )
+            : const LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: 3),
+      );
+
   Future<Position?> current() async {
     // في المتصفح: إن قرأنا موقعك قبل ثوانٍ (أثناء طلب الصلاحية) نستخدمه مباشرة.
     final last = _lastWeb;
